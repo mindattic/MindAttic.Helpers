@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="MindAttic.Helpers/MindAttic.Helpers.csproj" />
+  <Project Path="MindAttic.Helpers.Tests/MindAttic.Helpers.Tests.csproj" />
+</Solution>

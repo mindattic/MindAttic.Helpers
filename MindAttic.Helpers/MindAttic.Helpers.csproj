@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>MindAttic.Helpers</RootNamespace>
+    <AssemblyName>MindAttic.Helpers</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Version>0.1.0</Version>
+    <PackageId>MindAttic.Helpers</PackageId>
+    <Title>MindAttic.Helpers</Title>
+    <Description>Small, dependency-free helpers shared across the MindAttic ecosystem. Includes a deterministic abstract-art generator (AbstractArtGenerator) that turns any string seed into a stable SVG "fingerprint" image — the same generative-art style used on mindattic.com.</Description>
+    <PackageTags>mindattic;helpers;generative-art;svg;avatar;deterministic</PackageTags>
+    <PackageProjectUrl>https://github.com/mindattic/MindAttic.Helpers</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/mindattic/MindAttic.Helpers.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>
