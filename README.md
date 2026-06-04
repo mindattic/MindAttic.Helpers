@@ -32,7 +32,7 @@ Deterministic by construction: feed it the same slug anywhere — server, client
 ## Install
 
 ```xml
-<PackageReference Include="MindAttic.Helpers" Version="0.1.0" />
+<PackageReference Include="MindAttic.Helpers" Version="1.0.0" />
 ```
 
 MIT licensed. Part of the [MindAttic](https://mindattic.com) ecosystem.
