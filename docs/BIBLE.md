@@ -116,9 +116,9 @@ correctness), output shape, and edge/error cases. A behaviour is `✅` in
 [USER_STORIES](USER_STORIES.md) only when a named test proves it.
 
 ## 6. Verified state {#HLP-§6}
-Evidence captured **2026-06-07** on `net10.0` (Windows):
-- ✅ **Build**: library + tests compile clean.
-- ✅ **Tests**: `dotnet test` → **16 passed, 0 failed, 0 skipped** (~89 ms).
+Evidence re-confirmed **2026-06-07** on `net10.0` (Windows, .NET 10.0.8):
+- ✅ **Build**: `dotnet build` → Build succeeded. 0 Warning(s), 0 Error(s).
+- ✅ **Tests**: `dotnet test` → **16 passed, 0 failed, 0 skipped** (~1.4 s total).
   - `AbstractArtGeneratorTests` — 7 tests (determinism, distinctness, well-formed
     SVG, data-URI round-trip, initial override + default, 16-palette shape).
   - `PiHelperTests` — 9 tests (bare 3, 3.1415, 99-place reference match, determinism,
