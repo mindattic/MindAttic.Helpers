@@ -4,3 +4,4 @@ obj/
 .vs/
 out/
 [Tt]est[Rr]esults/
+.claude/checkpoint.md
