@@ -1,7 +1,7 @@
-bin/
+﻿bin/
 obj/
 *.user
 .vs/
 out/
 [Tt]est[Rr]esults/
-.claude/checkpoint.md
+.claude/quicksave.md
