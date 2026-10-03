@@ -7,7 +7,7 @@
               data schemas, story test citations, cited paths, digest freshness).
               Exits non-zero on any hard error.
     digest  - regenerate docs/BIBLE.digest.md from BIBLE.md (§1, §3, §5, §9) plus a
-              status index and the latest amendment head.
+              status index and any pending-decision heads.
   Windows PowerShell 5.1 compatible. No build step, no external modules.
 .EXAMPLE
   powershell -File tools/codex.ps1 doctor
@@ -296,12 +296,11 @@ function Invoke-Digest {
     $counts = Get-StoryStatusCounts
     $done = $counts.Done; $partial = $counts.Partial; $planned = $counts.Planned; $cut = $counts.Cut
 
-    # latest amendment head
-    $amendHead = ''
+    # pending decisions (AMENDMENTS.md entries not yet folded into the bible)
+    $pending = @()
     if (Test-Path $AmendPath) {
         $alines = (Read-Utf8Lines $AmendPath)
-        $heads = @($alines | Where-Object { $_ -match '^##\s+HLP-A' })
-        if ($heads.Count -gt 0) { $amendHead = ($heads[-1] -replace '^##\s+', '').Trim() }
+        $pending = @($alines | Where-Object { $_ -match '^##\s+HLP-A' } | ForEach-Object { ($_ -replace '^##\s+', '').Trim() })
     }
 
     $nl = "`n"
@@ -314,12 +313,14 @@ function Invoke-Digest {
     [void]$sb.Append("## 5. The Laws" + $nl + $s5 + $nl + $nl)
     [void]$sb.Append("## 9. Glossary" + $nl + $s9 + $nl + $nl)
     [void]$sb.Append("## Status index (stories)" + $nl)
-    [void]$sb.Append(("- done: {0}  partial: {1}  planned: {2}  cut: {3}" -f $done, $partial, $planned, $cut) + $nl + $nl)
-    [void]$sb.Append("## Latest amendment" + $nl)
-    [void]$sb.Append(($(if ($amendHead) { "- $amendHead" } else { "- (none)" })) + $nl)
+    [void]$sb.Append(("- done: {0}  partial: {1}  planned: {2}" -f $done, $partial, $planned) + $nl + $nl)
+    if ($pending.Count -gt 0) {
+        [void]$sb.Append("## Pending decisions (docs/AMENDMENTS.md)" + $nl)
+        foreach ($p in $pending) { [void]$sb.Append("- $p" + $nl) }
+    }
 
     [System.IO.File]::WriteAllText($DigestPath, $sb.ToString(), $script:Utf8NoBom)
-    Write-Host "digest: wrote docs/BIBLE.digest.md ($done done / $partial partial / $planned planned / $cut cut)" -ForegroundColor Green
+    Write-Host "digest: wrote docs/BIBLE.digest.md ($done done / $partial partial / $planned planned)" -ForegroundColor Green
 }
 
 switch ($Command) {

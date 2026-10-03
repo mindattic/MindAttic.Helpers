@@ -4,11 +4,11 @@ project: MindAttic.Helpers
 code: HLP
 layer: stories
 status: living
-updated: 2026-06-07
+updated: 2026-10-03
 ---
 
 # MindAttic.Helpers — User Stories
-> ✅ done (shipped & tested) · 🟡 partial · ⬜ planned · 🗑️ cut. Every ✅ cites the test.
+> ✅ done (shipped & tested) · 🟡 partial · ⬜ planned. Every ✅ cites the test.
 
 ## Epic A — Deterministic abstract art
 Helper: [`AbstractArtGenerator`](BIBLE.md#HLP-§4).
@@ -89,7 +89,3 @@ Helper: [`PiHelper`](BIBLE.md#HLP-§4).
    missing XML docs fail the build.
 3. ⬜ Future helpers: each new helper arrives as an Epic with stories that each cite a
    verifying NUnit test before flipping to ✅.
-
-### Audit log
-No stories have been changed since creation (initial Codex import, 2026-06-07); the
-original spec equals the current text above.

@@ -16,8 +16,8 @@ if ([string]::IsNullOrWhiteSpace($digest)) { Write-Output '{}'; return }
 $preamble = @"
 [MindAttic.Helpers / Codex] The following is the AUTHORITATIVE project digest, generated
 from docs/BIBLE.md. Treat it as the source of truth for what this project IS, is NOT, and
-the Laws that govern it. Full detail and stable IDs live in docs/BIBLE.md, docs/USER_STORIES.md,
-and docs/AMENDMENTS.md (an amendment wins over the bible). Do not contradict it.
+the Laws that govern it. Full detail and stable IDs live in docs/BIBLE.md and
+docs/USER_STORIES.md. Do not contradict it.
 
 "@
 

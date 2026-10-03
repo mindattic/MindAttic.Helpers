@@ -46,7 +46,8 @@ documented, opt-out best-effort guard — never silent nondeterminism in the res
 When a helper ports an existing implementation (e.g. `AbstractArtGenerator` mirrors
 mindattic.com's `generateProjectArt`), it must consume its RNG in the same order and
 reuse data tables verbatim, so output is identical across the stack. Determinism is
-locked by tests; changing the stream is a breaking change requiring an amendment.
+locked by tests; changing the stream is a breaking change (a new whole-number version,
+[HOUSE-LAW-1](../../MindAttic.HouseRules.md#HOUSE-LAW-1)) and is recorded here in the bible.
 
 ### HLP-LAW-4 — Every helper is locked by tests {#HLP-LAW-4}
 No helper ships without NUnit tests asserting its core invariant (determinism /
@@ -67,7 +68,5 @@ correctness), output shape, and edge/error cases. A behaviour is `✅` in
 - **Memory guard** — `PiHelper`'s best-effort RAM check (default stop below 33% free).
 
 ## Status index (stories)
-- done: 17  partial: 2  planned: 0  cut: 0
+- done: 17  partial: 2  planned: 0
 
-## Latest amendment
-- HLP-A1 — Adopt the Codex documentation standard (supersedes —)

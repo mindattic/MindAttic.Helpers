@@ -4,7 +4,7 @@ project: MindAttic.Helpers
 code: HLP
 layer: bible
 status: living
-updated: 2026-06-07
+updated: 2026-10-03
 ---
 
 # MindAttic.Helpers — Project Bible
@@ -108,7 +108,8 @@ documented, opt-out best-effort guard — never silent nondeterminism in the res
 When a helper ports an existing implementation (e.g. `AbstractArtGenerator` mirrors
 mindattic.com's `generateProjectArt`), it must consume its RNG in the same order and
 reuse data tables verbatim, so output is identical across the stack. Determinism is
-locked by tests; changing the stream is a breaking change requiring an amendment.
+locked by tests; changing the stream is a breaking change (a new whole-number version,
+[HOUSE-LAW-1](../../MindAttic.HouseRules.md#HOUSE-LAW-1)) and is recorded here in the bible.
 
 ### HLP-LAW-4 — Every helper is locked by tests {#HLP-LAW-4}
 No helper ships without NUnit tests asserting its core invariant (determinism /
@@ -116,9 +117,9 @@ correctness), output shape, and edge/error cases. A behaviour is `✅` in
 [USER_STORIES](USER_STORIES.md) only when a named test proves it.
 
 ## 6. Verified state {#HLP-§6}
-Evidence re-confirmed **2026-06-07** on `net10.0` (Windows, .NET 10.0.8):
+Evidence re-confirmed **2026-10-03** on `net10.0` (Windows):
 - ✅ **Build**: `dotnet build` → Build succeeded. 0 Warning(s), 0 Error(s).
-- ✅ **Tests**: `dotnet test` → **16 passed, 0 failed, 0 skipped** (~1.4 s total).
+- ✅ **Tests**: `dotnet test MindAttic.Helpers.slnx` → **16 passed, 0 failed, 0 skipped**.
   - `AbstractArtGeneratorTests` — 7 tests (determinism, distinctness, well-formed
     SVG, data-URI round-trip, initial override + default, 16-palette shape).
   - `PiHelperTests` — 9 tests (bare 3, 3.1415, 99-place reference match, determinism,
@@ -128,7 +129,8 @@ Evidence re-confirmed **2026-06-07** on `net10.0` (Windows, .NET 10.0.8):
 - See [USER_STORIES.md](USER_STORIES.md) for per-capability test citations.
 
 ## 7. Active frontier {#HLP-§7}
-- No open RFCs beyond the seed example — see [docs/rfc/](rfc/).
+- Open RFC: [0001 — Lock zero-dependency + full XML-doc coverage in CI](rfc/0001-example.md)
+  (planned; would close HLP-US-C1 and HLP-US-C2).
 - Backlog and partial/planned work live in
   [USER_STORIES.md → Priority backlog](USER_STORIES.md).
 - Direction: grow the helper set (each new helper a pure static class with tests),
