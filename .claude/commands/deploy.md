@@ -1,15 +1,11 @@
 ---
-description: Deploy the MindAttic.Helpers landing page (mindattic.com/mindattichelpers.htm) via MindAttic.Deploy.
+description: MindAttic.Helpers has no web deploy -- its GitHub README (https://github.com/mindattic/MindAttic.Helpers) is the project page. The mindattic.com/mindattichelpers.htm landing page was retired (MindAttic.Deploy DEP-A6).
 ---
 
-Render this repo's `README.md` through the MindAttic catalog template (Cyberspace theme) and FTPS-upload the single-file result to `mindattic.com/mindattichelpers.htm`.
+# /deploy -- no web deploy
 
-Run from the sibling MindAttic.Deploy repo:
+**MindAttic.Helpers has no web deploy.** Its README on GitHub -- https://github.com/mindattic/MindAttic.Helpers -- is the project page. To update the project page, edit `README.md` and push to `main`.
 
-```bash
-cd ../MindAttic.Deploy
-npm run build  -- --only mindattichelpers --no-discover   # render out/mindattichelpers.htm
-npm run deploy -- --only mindattichelpers                 # FTPS upload (Vault-held credentials)
-```
+The README-driven landing page `mindattic.com/mindattichelpers.htm` was retired together with MindAttic.Deploy's catalog mode (amendment DEP-A6 in `MindAttic.Deploy/docs/AMENDMENTS.md`, 2026-10-03). `npm run deploy -- --only mindattichelpers` is now rejected, so do not run MindAttic.Deploy for this project.
 
-The `mindattichelpers` entry already exists in `MindAttic.Deploy/projects.json` (`projects[]`, Cyberspace theme). For it to also appear on the mindattic.com homepage grid, the GitHub repo `mindattic/MindAttic.Helpers` must be public and tagged with the `software` topic.
+When invoked, tell the user the above and stop.

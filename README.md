@@ -1,117 +1,59 @@
 # MindAttic.Helpers
 
-Small, dependency-free .NET (`net10.0`) library of pure, deterministic helpers shared
-across the MindAttic ecosystem. Every helper is a `public static` class: no shared
-mutable state, no I/O beyond a documented, opt-out best-effort guard, no third-party
-runtime dependencies — BCL only. See [docs/BIBLE.md](docs/BIBLE.md) for the full
-architecture canon and the project's Laws; this file is the practical how-to.
+Dependency-free .NET 10 helpers: a deterministic art generator that turns any string into a stable SVG avatar, and a streaming pi digit generator that stops before it runs out of memory.
 
-Two helpers today:
-
-- **`AbstractArtGenerator`** — a deterministic generative-art engine that turns any
-  string seed into a stable SVG "fingerprint" image. The same seed always produces the
-  same picture, making it ideal for avatars, project tiles, or persona portraits keyed
-  by a slug. It's a faithful port of the generative art on **mindattic.com**: a deep
-  gradient ground, a scatter of translucent shapes, and one bold accent letter.
-- **`PiHelper`** — streams decimal digits of π using Jeremy Gibbons' unbounded spigot
-  algorithm (arbitrary-precision `BigInteger` state). Includes a memory guard that
-  stops cleanly when free RAM drops below a configurable fraction, so very large digit
-  counts never OOM.
-
-## Public API catalog
-
-### `AbstractArtGenerator` (static class)
-
-| Member | Signature | Description |
-|---|---|---|
-| `Palettes` | `static readonly IReadOnlyList<string[]> Palettes` | The 16 curated `[gradientStart, gradientEnd, accent]` colour triples (deep teal/indigo/purple/charcoal grounds, each with one neon accent) — reused verbatim from mindattic.com. |
-| `Svg` | `static string Svg(string seed, char? initial = null)` | The raw 300×300 SVG markup for `seed`. The overlaid letter defaults to the first alphanumeric character of `seed` (or `?` if none); pass `initial` to override it. |
-| `DataUri` | `static string DataUri(string seed, char? initial = null)` | `Svg(seed, initial)` wrapped as a base64 `data:image/svg+xml` URI — drop straight into `<img src>` or a CSS `background-image: url(...)`. |
-
-**How it works:** the seed string is hashed with FNV-1a (32-bit) and advanced by a
-Numerical-Recipes LCG (private `Rng` struct) — bit-for-bit the same deterministic
-stream as the mindattic.com JS. That stream picks one of the 16 palettes, a
-random-direction two-stop linear gradient, 5–8 translucent shapes (circles, rotated
-rectangles, triangles) that are allowed to bleed past the 300×300 frame, and finally
-overlays a single large initial letter in the accent colour. Output is a self-contained
-SVG string: no network, no files, no fonts to ship. Feed it the same slug anywhere —
-server, client, build step — and you get pixel-identical art.
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](MindAttic.Helpers/MindAttic.Helpers.csproj) [![C#](https://img.shields.io/badge/language-C%23-239120)](MindAttic.Helpers) [![Dependencies](https://img.shields.io/badge/dependencies-BCL%20only-blue)](MindAttic.Helpers/MindAttic.Helpers.csproj) [![Tests](https://img.shields.io/badge/tests-16%20NUnit-brightgreen)](MindAttic.Helpers.Tests) [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 ```csharp
 using MindAttic.Helpers;
 
-// A base64 data URI — drop straight into <img src> or CSS background-image:
-string uri = AbstractArtGenerator.DataUri("persona-0042");
+// One line: a stable 300x300 portrait for any id, ready for <img src>.
+string avatar = AbstractArtGenerator.DataUri("persona-0042");
 
-// Or the raw 300×300 SVG, with an optional letter override:
-string svg = AbstractArtGenerator.Svg("persona-0042", initial: 'M');
+// Same seed, same picture, on every machine, forever.
+bool stable = AbstractArtGenerator.Svg("persona-0042") == AbstractArtGenerator.Svg("persona-0042"); // true
+
+// Pi to 1000 places, halting cleanly if free RAM falls below 33%.
+var pi = PiHelper.Calculate(1000);
+Console.WriteLine(pi.Value);   // "3.14159265358979..."
 ```
 
-```razor
-<img src="@AbstractArtGenerator.DataUri(persona.Id)" alt="@persona.Name" />
+## Why
+
+- Give every user, project or persona a distinctive picture without storing a single image file.
+- Get the identical picture on the server, in the browser and in a build step, because the output depends only on the seed string.
+- Drop the result straight into an `<img>` tag or a CSS background as a data URI, with no network calls, fonts or files to ship.
+- Compute large numbers of pi digits without risking an out-of-memory crash on a shared machine.
+- Add nothing to your dependency graph: the library uses the .NET base class library only.
+
+## Features
+
+### AbstractArtGenerator
+
+- Turns any string seed into a self-contained 300 by 300 SVG: a deep two-stop gradient ground, five to eight translucent circles, rotated rectangles and triangles that bleed past the frame, and one large accent letter.
+- Picks from 16 curated palettes, each a gradient start, gradient end and neon accent, reused verbatim from mindattic.com.
+- Overlays the first alphanumeric character of the seed (or `?`), or a letter you pass in.
+- Returns raw SVG markup or a base64 `data:image/svg+xml` URI.
+- Bit-for-bit faithful port of the generative art on mindattic.com: the same FNV-1a hash and Numerical Recipes LCG stream as the original JavaScript.
+
+### PiHelper
+
+- Streams decimal digits of pi with Jeremy Gibbons' unbounded spigot algorithm over `BigInteger` state, so every digit already produced is correct.
+- Checks free system memory every 256 digits and stops early once it drops below a threshold you choose (33% by default), reporting that it did.
+- Returns a `PiResult` with the digits, the number of places produced, whether it stopped for memory, and the last free-memory reading.
+
+## Quick start
+
+Prerequisites: the .NET 10 SDK.
+
+```powershell
+git clone https://github.com/mindattic/MindAttic.Helpers.git
+cd MindAttic.Helpers
+dotnet build
+dotnet test
 ```
 
-```csharp
-// Determinism is the whole point: the same seed always yields the same output.
-Assert.That(AbstractArtGenerator.Svg("persona-0042"),
-            Is.EqualTo(AbstractArtGenerator.Svg("persona-0042")));
-
-// Different seeds give visibly different art.
-Assert.That(AbstractArtGenerator.Svg("persona-0001"),
-            Is.Not.EqualTo(AbstractArtGenerator.Svg("persona-0002")));
-
-// The palette set is locked at exactly 16 triples.
-Assert.That(AbstractArtGenerator.Palettes, Has.Count.EqualTo(16));
-```
-
-### `PiHelper` (static class)
-
-| Member | Signature | Description |
-|---|---|---|
-| `MemoryCheckInterval` | `const int MemoryCheckInterval = 256` | How many decimal places are emitted between memory checks (batched so the GC isn't queried on every digit). |
-| `Calculate` | `static PiResult Calculate(int decimalPlaces, double minFreeMemoryFraction = 0.33)` | Computes π to `decimalPlaces` digits after the decimal point (leading `3` always present), stopping early if free system RAM drops below `minFreeMemoryFraction`. Pass `0` to disable the guard and always compute the full count. Throws `ArgumentOutOfRangeException` if `decimalPlaces < 0` or `minFreeMemoryFraction` is outside `[0, 1]`. |
-| `PiResult` | `readonly record struct PiResult(string Value, int DecimalPlacesProduced, bool StoppedForMemory, double FreeMemoryFraction)` | The outcome of a `Calculate` run — `Value` is always a correct prefix of π (e.g. `"3.1415..."`, or bare `"3"` for zero places); `StoppedForMemory` is `true` only if the run halted early because free RAM fell below the threshold. |
-
-**How it works:** digits are produced with Gibbons' unbounded spigot algorithm
-(`q, r, t, k, n, l` state over `BigInteger`), which streams one *correct* digit per
-step without ever needing to know the final length up front — so the digits already
-produced are always right, never a half-finished approximation. Because arbitrary-
-precision π is a genuine memory hog (the working integers grow roughly linearly with
-digit count), the helper reads the system-wide physical-memory load via
-`GC.GetGCMemoryInfo()` every `MemoryCheckInterval` digits and aborts once free RAM
-drops below `minFreeMemoryFraction` (default 33%). That reading is a recent GC
-snapshot, not a live gauge, and reflects the cgroup limit inside a container — it's a
-safety valve against OOM/thrashing, not a precise allocator.
-
-```csharp
-using MindAttic.Helpers;
-
-// Stream the first 1000 digits of π (stops early if RAM drops below 33%):
-var result = PiHelper.Calculate(1000);
-Console.WriteLine(result.Value);   // "3.14159265358979..."
-Console.WriteLine(result.StoppedForMemory ? "stopped early" : "complete");
-```
-
-```csharp
-// Zero places gives the bare leading digit.
-Assert.That(PiHelper.Calculate(0).Value, Is.EqualTo("3"));
-
-// Four places is the familiar textbook prefix.
-Assert.That(PiHelper.Calculate(4).Value, Is.EqualTo("3.1415"));
-
-// Disable the guard entirely to force the full requested count.
-var full = PiHelper.Calculate(1000, minFreeMemoryFraction: 0);
-Assert.That(full.DecimalPlacesProduced, Is.EqualTo(1000));
-```
-
-## How to reference this library
-
-There are no other MindAttic repos consuming `MindAttic.Helpers` yet — this workspace
-audit found zero `ProjectReference`/`PackageReference` hits to it outside this repo's
-own test project. The two supported ways to pull it in, once a consumer needs it:
-
-**Project reference** (in-workspace, source-level — what
-`MindAttic.Helpers.Tests.csproj` does today):
+You should see the 16 NUnit tests pass. To use the library from another project, add a project reference (the package is configured for NuGet but not yet published):
 
 ```xml
 <ItemGroup>
@@ -119,103 +61,175 @@ own test project. The two supported ways to pull it in, once a consumer needs it
 </ItemGroup>
 ```
 
-**NuGet package reference** (once published — the package is configured and ready to
-pack/push, see `MindAttic.Helpers/MindAttic.Helpers.csproj`):
+Once a package is published, the reference becomes:
 
 ```xml
 <PackageReference Include="MindAttic.Helpers" Version="1.0.0" />
 ```
 
-Either way, the API surface is identical:
+Either way the namespace is the same:
 
 ```csharp
 using MindAttic.Helpers;
 ```
 
-## Build, test, pack
+## Usage
 
-```bash
-dotnet build    # library + tests (net10.0, TreatWarningsAsErrors=true, Nullable=enable)
-dotnet test     # NUnit suite (16 tests at last verified count)
+### Art in a Razor page
+
+```razor
+<img src="@AbstractArtGenerator.DataUri(persona.Id)" alt="@persona.Name" />
+```
+
+### Raw SVG with a letter override
+
+Useful when the seed is an opaque slug but you want the display name's initial:
+
+```csharp
+string svg = AbstractArtGenerator.Svg("persona-0042", initial: 'M');
+```
+
+### Determinism you can test
+
+```csharp
+Assert.That(AbstractArtGenerator.Svg("persona-0042"),
+            Is.EqualTo(AbstractArtGenerator.Svg("persona-0042")));
+
+Assert.That(AbstractArtGenerator.Svg("persona-0001"),
+            Is.Not.EqualTo(AbstractArtGenerator.Svg("persona-0002")));
+
+Assert.That(AbstractArtGenerator.Palettes, Has.Count.EqualTo(16));
+```
+
+### Pi digits
+
+```csharp
+var result = PiHelper.Calculate(1000);
+Console.WriteLine(result.Value);   // "3.14159265358979..."
+Console.WriteLine(result.StoppedForMemory ? "stopped early" : "complete");
+
+PiHelper.Calculate(0).Value;   // "3"
+PiHelper.Calculate(4).Value;   // "3.1415"
+
+// Disable the guard to always compute the full count.
+var full = PiHelper.Calculate(1000, minFreeMemoryFraction: 0);
+// full.DecimalPlacesProduced == 1000
+```
+
+## API
+
+### AbstractArtGenerator
+
+A static class in `MindAttic.Helpers`.
+
+| Member | Signature | Description |
+| --- | --- | --- |
+| `Palettes` | `static readonly IReadOnlyList<string[]> Palettes` | The 16 curated colour triples: gradient start, gradient end, accent. |
+| `Svg` | `static string Svg(string seed, char? initial = null)` | Raw 300 by 300 SVG markup for the seed. The letter defaults to the seed's first alphanumeric character, or `?`. |
+| `DataUri` | `static string DataUri(string seed, char? initial = null)` | The same SVG as a base64 `data:image/svg+xml` URI for an `<img>` source or CSS `background-image`. |
+
+### PiHelper
+
+A static class in `MindAttic.Helpers`.
+
+| Member | Signature | Description |
+| --- | --- | --- |
+| `MemoryCheckInterval` | `const int MemoryCheckInterval = 256` | Decimal places emitted between memory checks, so the GC is not queried on every digit. |
+| `Calculate` | `static PiResult Calculate(int decimalPlaces, double minFreeMemoryFraction = 0.33)` | Pi to the given number of places after the point. Pass `0` as the fraction to disable the guard. Throws `ArgumentOutOfRangeException` for negative places or a fraction outside 0 to 1. |
+| `PiResult` | `readonly record struct PiResult(string Value, int DecimalPlacesProduced, bool StoppedForMemory, double FreeMemoryFraction)` | `Value` is always a correct prefix of pi; `StoppedForMemory` is true only when the guard halted the run. |
+
+## How it works
+
+```text
+AbstractArtGenerator.Svg("persona-0042")
+
+  seed string --FNV-1a 32-bit--> uint --Numerical Recipes LCG--> stream of doubles
+                                                                    |
+     palette (1 of 16) <--------------------------------------------+
+     gradient angle    <--------------------------------------------+
+     5-8 shapes: kind, position, size, colour, opacity, rotation <--+
+                                                                    v
+  <svg 300x300> gradient rect + shapes + accent letter </svg>   (no I/O, no fonts shipped)
+```
+
+The generator's output depends only on the seed, so the same slug yields pixel-identical art anywhere it runs.
+
+PiHelper keeps the spigot's `q, r, t, k, n, l` state as `BigInteger`s and emits one correct digit per step without knowing the final length. Those integers grow roughly linearly with the digit count, so every 256 digits it reads the system-wide memory load from `GC.GetGCMemoryInfo()` and stops once free RAM falls below the threshold. That reading is a recent GC snapshot, not a live gauge, and inside a container it reflects the cgroup limit: it is a safety valve against running out of memory, not a precise allocator.
+
+## Building
+
+```powershell
+dotnet build    # library + tests (net10.0, TreatWarningsAsErrors, Nullable enabled)
+dotnet test     # 16 NUnit tests
 dotnet pack MindAttic.Helpers/MindAttic.Helpers.csproj -c Release   # produces the NuGet package
 ```
 
-- Target framework: `net10.0` (see `Directory.Build.props` for shared compiler settings
-  — `LangVersion=latest`, `Nullable=enable`, `TreatWarningsAsErrors=true` with
-  `CS1591` excluded).
-- `MindAttic.Helpers.csproj` has `GenerateDocumentationFile=true`, so every public
-  member carries an XML doc comment; the packed NuGet includes this repo's
-  `README.md` as `PackageReadmeFile`.
-- Versioning is whole-number/major-only per house law: `<Version>1.0.0</Version>`
-  today, next release is `2.0.0` (see
-  [HOUSE-LAW-1](../MindAttic.HouseRules.md#HOUSE-LAW-1)).
+- Target framework: `net10.0`. Shared compiler settings live in `Directory.Build.props`: latest language version, nullable enabled, warnings as errors with `CS1591` excluded.
+- The library sets `GenerateDocumentationFile`, so every public member carries an XML doc comment, and the package includes this README.
+- Versioning is whole-number and major-only per the MindAttic house rules: `1.0.0` today, `2.0.0` next.
 
-## Directory layout
+## Testing
 
-```
+| Fixture | Tests | Covers |
+| --- | --- | --- |
+| `AbstractArtGeneratorTests` | 7 | Determinism, different seeds differ, well-formed SVG with a palette gradient, data URI round-trip, letter override and default, exactly 16 palettes. |
+| `PiHelperTests` | 9 | Zero and four places, 99 places against known pi, determinism, longer runs extend shorter ones, guard disabled, impossible threshold stops early, argument validation. |
+
+## Project layout
+
+```text
 MindAttic.Helpers/
-├── MindAttic.Helpers/                     # the library (IsPackable=true)
+├── MindAttic.Helpers/                     the library (IsPackable=true)
 │   ├── AbstractArtGenerator.cs
 │   ├── PiHelper.cs
 │   └── MindAttic.Helpers.csproj
-├── MindAttic.Helpers.Tests/                # NUnit test project (IsPackable=false)
-│   ├── AbstractArtGeneratorTests.cs        # 7 tests
-│   ├── PiHelperTests.cs                    # 9 tests
+├── MindAttic.Helpers.Tests/               NUnit test project (IsPackable=false)
+│   ├── AbstractArtGeneratorTests.cs       7 tests
+│   ├── PiHelperTests.cs                   9 tests
 │   └── MindAttic.Helpers.Tests.csproj
-├── MindAttic.Helpers.slnx                  # solution stitching both projects
-├── Directory.Build.props                   # shared compiler settings for both projects
-├── docs/                                   # Codex canon (see below)
-│   ├── BIBLE.md
-│   ├── AMENDMENTS.md
-│   ├── USER_STORIES.md
-│   ├── BIBLE.digest.md                     # generated — never hand-edit
-│   └── rfc/
+├── MindAttic.Helpers.slnx                 solution stitching both projects
+├── Directory.Build.props                  shared compiler settings
+├── docs/                                  Codex documentation
 ├── tools/
-│   ├── codex.ps1                           # docs digest/doctor tooling
-│   └── build-readme.ps1                    # regenerates README.htm (thin wrapper; see below)
-├── CLAUDE.md
+│   ├── codex.ps1                          docs digest and doctor tooling
+│   └── build-readme.ps1                   regenerates README.htm from this file
 ├── LICENSE
-└── README.md                               # this file
-```
-
-## Canonical documentation
-
-This repo follows the MindAttic **Codex** documentation standard — a fact lives in
-exactly one layer, linked by stable ID rather than line number:
-
-- **[docs/BIBLE.md](docs/BIBLE.md)** (L0) — what the library is/is not, architecture
-  canon, the Laws (`HLP-LAW-1..4`), verified build/test state, glossary.
-- **[docs/AMENDMENTS.md](docs/AMENDMENTS.md)** (L1) — append-only change log
-  (`HLP-A<n>`); an amendment wins over the bible where they disagree.
-- **[docs/USER_STORIES.md](docs/USER_STORIES.md)** (L2) — stories `HLP-US-<Epic><n>`;
-  every ✅ names its verifying NUnit test.
-- **[docs/rfc/](docs/rfc/)** — design notes that graduate into the bible + stories.
-- **[docs/BIBLE.digest.md](docs/BIBLE.digest.md)** — generated by `tools/codex.ps1
-  digest`; never hand-edit.
-- **[MindAttic.HouseRules.md](../MindAttic.HouseRules.md)** — org-wide laws inherited
-  by BIBLE §5.
-
-```powershell
-powershell -File tools/codex.ps1 digest   # regenerate docs/BIBLE.digest.md
-powershell -File tools/codex.ps1 doctor   # validate front-matter, IDs, refs, stories, digest freshness
-```
-
-## Regenerating README.htm
-
-`tools/build-readme.ps1` is a thin wrapper around the shared engine at
-`codex-standard/build-readme.ps1` (workspace root) that every MindAttic repo uses, so
-all `README.htm` files look and behave identically:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File tools\build-readme.ps1
+└── README.md
 ```
 
 ## Laws
 
-- Zero runtime dependencies — BCL only ([HLP-LAW-1](docs/BIBLE.md#HLP-LAW-1)).
-- All helpers are pure, deterministic, and static ([HLP-LAW-2](docs/BIBLE.md#HLP-LAW-2)).
+- Zero runtime dependencies, base class library only ([HLP-LAW-1](docs/BIBLE.md#HLP-LAW-1)).
+- All helpers are pure, deterministic and static ([HLP-LAW-2](docs/BIBLE.md#HLP-LAW-2)).
 - Faithful ports stay bit-for-bit identical to the originals ([HLP-LAW-3](docs/BIBLE.md#HLP-LAW-3)).
 - Every helper is locked by tests ([HLP-LAW-4](docs/BIBLE.md#HLP-LAW-4)).
-- Whole-number versioning ([HOUSE-LAW-1](../MindAttic.HouseRules.md#HOUSE-LAW-1)).
+- Whole-number versioning (MindAttic house rule HOUSE-LAW-1).
 
-MIT licensed. Part of the [MindAttic](https://mindattic.com) ecosystem.
+## Limitations
+
+- The package is configured but not yet published to NuGet; reference the project directly for now.
+- No other MindAttic repo references this library yet.
+- The pi memory guard is a best-effort snapshot and can be disabled; it is not a hard allocation limit.
+
+## Documentation
+
+This repo follows the MindAttic Codex documentation standard: a fact lives in exactly one layer, linked by stable ID.
+
+- [docs/BIBLE.md](docs/BIBLE.md): what the library is and is not, architecture, the Laws, verified build and test state, glossary.
+- [docs/AMENDMENTS.md](docs/AMENDMENTS.md): append-only change log; an amendment wins over the bible.
+- [User stories](docs/USER_STORIES.md): each completed story names its verifying NUnit test.
+- [docs/rfc](docs/rfc): design notes that graduate into the bible and stories.
+- [docs/BIBLE.digest.md](docs/BIBLE.digest.md): generated by `tools/codex.ps1 digest`; never hand-edit.
+- [AGENTS.md](AGENTS.md): instructions for coding agents working in this repo.
+
+```powershell
+powershell -File tools/codex.ps1 digest   # regenerate docs/BIBLE.digest.md
+powershell -File tools/codex.ps1 doctor   # validate front-matter, IDs, refs, stories, digest freshness
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\build-readme.ps1   # regenerate README.htm
+```
+
+## License
+
+MIT. See [LICENSE](LICENSE).
+
+Part of [MindAttic](https://mindattic.com) — see more projects at [github.com/mindattic](https://github.com/mindattic). Related: [MindAttic.Legion](https://github.com/mindattic/MindAttic.Legion), [MindAttic.Vault](https://github.com/mindattic/MindAttic.Vault).
