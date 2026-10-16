@@ -69,7 +69,7 @@ function Get-StoryStatusCounts {
     $done = 0; $partial = 0; $planned = 0; $cut = 0
     if (Test-Path $StoriesPath) {
         foreach ($line in ((Read-Utf8Lines $StoriesPath))) {
-            if ($line -notmatch 'HLP-US-') { continue }
+            if ($line -notmatch 'M\.HELP-US-') { continue }
             if     ($line.Contains($script:Emoji.Done))    { $done++ }
             elseif ($line.Contains($script:Emoji.Partial)) { $partial++ }
             elseif ($line.Contains($script:Emoji.Planned)) { $planned++ }
@@ -82,9 +82,9 @@ function Get-StoryStatusCounts {
 $script:Section = [char]::ConvertFromUtf32(0xA7)   # § (avoid a literal in source)
 
 function Get-BibleSection {
-    # Returns the body text of the "## N. Title {#HLP-§N}" bible section, by number.
+    # Returns the body text of the "## N. Title {#M.HELP-§N}" bible section, by number.
     param([string]$Text, [int]$Number)
-    $anchor = "HLP-$($script:Section)$Number"
+    $anchor = "M.HELP-$($script:Section)$Number"
     $lines = $Text -split "\r?\n"
     $out = New-Object System.Collections.Generic.List[string]
     $inSection = $false
@@ -211,10 +211,10 @@ function Invoke-Doctor {
     $doneCount = $counts.Done; $partial = $counts.Partial; $planned = $counts.Planned; $cut = $counts.Cut
     if (Test-Path $StoriesPath) {
         $raw = (Read-Utf8 $StoriesPath)
-        # Per-story bullets only: a list item beginning "- **HLP-US-XX ..." extending to
+        # Per-story bullets only: a list item beginning "- **M.HELP-US-XX ..." extending to
         # the next such bullet, a heading, or EOF. Numbered backlog items (which may
         # mention a story id) are intentionally excluded.
-        $bullets = [regex]::Matches($raw, "(?sm)^-\s+\*\*(HLP-US-[A-Za-z0-9]+)\b.*?(?=(\r?\n-\s+\*\*HLP-US-)|(\r?\n#)|\z)")
+        $bullets = [regex]::Matches($raw, "(?sm)^-\s+\*\*(M\.HELP-US-[A-Za-z0-9]+)\b.*?(?=(\r?\n-\s+\*\*M\.HELP-US-)|(\r?\n#)|\z)")
         foreach ($b in $bullets) {
             $sid = $b.Groups[1].Value
             $body = $b.Groups[0].Value
@@ -300,14 +300,14 @@ function Invoke-Digest {
     $pending = @()
     if (Test-Path $AmendPath) {
         $alines = (Read-Utf8Lines $AmendPath)
-        $pending = @($alines | Where-Object { $_ -match '^##\s+HLP-A' } | ForEach-Object { ($_ -replace '^##\s+', '').Trim() })
+        $pending = @($alines | Where-Object { $_ -match '^##\s+M\.HELP-A' } | ForEach-Object { ($_ -replace '^##\s+', '').Trim() })
     }
 
     $nl = "`n"
     $sb = New-Object System.Text.StringBuilder
     [void]$sb.Append("AUTHORITATIVE - full detail in docs/BIBLE.md" + $nl + $nl)
     [void]$sb.Append("# MindAttic.Helpers - Bible Digest (generated)" + $nl)
-    [void]$sb.Append("<!-- generatedFrom: HLP-BIBLE. Do not hand-edit; run tools/codex.ps1 digest. -->" + $nl + $nl)
+    [void]$sb.Append("<!-- generatedFrom: M.HELP-BIBLE. Do not hand-edit; run tools/codex.ps1 digest. -->" + $nl + $nl)
     [void]$sb.Append("## 1. The one sentence" + $nl + $s1 + $nl + $nl)
     [void]$sb.Append("## 3. What it is NOT" + $nl + $s3 + $nl + $nl)
     [void]$sb.Append("## 5. The Laws" + $nl + $s5 + $nl + $nl)

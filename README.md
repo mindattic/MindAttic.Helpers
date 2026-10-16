@@ -199,10 +199,10 @@ MindAttic.Helpers/
 
 ## Laws
 
-- Zero runtime dependencies, base class library only ([HLP-LAW-1](docs/BIBLE.md#HLP-LAW-1)).
-- All helpers are pure, deterministic and static ([HLP-LAW-2](docs/BIBLE.md#HLP-LAW-2)).
-- Faithful ports stay bit-for-bit identical to the originals ([HLP-LAW-3](docs/BIBLE.md#HLP-LAW-3)).
-- Every helper is locked by tests ([HLP-LAW-4](docs/BIBLE.md#HLP-LAW-4)).
+- Zero runtime dependencies, base class library only ([M.HELP-LAW-1](docs/BIBLE.md#M.HELP-LAW-1)).
+- All helpers are pure, deterministic and static ([M.HELP-LAW-2](docs/BIBLE.md#M.HELP-LAW-2)).
+- Faithful ports stay bit-for-bit identical to the originals ([M.HELP-LAW-3](docs/BIBLE.md#M.HELP-LAW-3)).
+- Every helper is locked by tests ([M.HELP-LAW-4](docs/BIBLE.md#M.HELP-LAW-4)).
 - Whole-number versioning (MindAttic house rule HOUSE-LAW-1).
 
 ## Limitations

@@ -1,7 +1,7 @@
 ---
 codex: 1
 project: MindAttic.Helpers
-code: HLP
+code: M.HELP
 layer: amendments
 status: living
 updated: 2026-10-03

@@ -1,7 +1,7 @@
 AUTHORITATIVE - full detail in docs/BIBLE.md
 
 # MindAttic.Helpers - Bible Digest (generated)
-<!-- generatedFrom: HLP-BIBLE. Do not hand-edit; run tools/codex.ps1 digest. -->
+<!-- generatedFrom: M.HELP-BIBLE. Do not hand-edit; run tools/codex.ps1 digest. -->
 
 ## 1. The one sentence
 MindAttic.Helpers is a small, zero-dependency .NET library of pure, deterministic
@@ -31,25 +31,25 @@ The most load-bearing for this library:
 
 Project-specific laws:
 
-### HLP-LAW-1 — Zero runtime dependencies {#HLP-LAW-1}
+### M.HELP-LAW-1 — Zero runtime dependencies {#M.HELP-LAW-1}
 The library references only the .NET base class library. No third-party runtime
 `PackageReference` may be added to `MindAttic.Helpers.csproj`. A helper that needs a
 dependency does not belong here. (Test-only dependencies in the Tests project are fine.)
 
-### HLP-LAW-2 — Helpers are pure, deterministic, static {#HLP-LAW-2}
+### M.HELP-LAW-2 — Helpers are pure, deterministic, static {#M.HELP-LAW-2}
 Every helper is a `public static` class with no shared mutable state and no I/O
 (no files, no network). The same input yields the same output everywhere. Any
 unavoidable environmental reading (e.g. `PiHelper`'s RAM check) must be a clearly
 documented, opt-out best-effort guard — never silent nondeterminism in the result.
 
-### HLP-LAW-3 — Faithful ports stay bit-for-bit {#HLP-LAW-3}
+### M.HELP-LAW-3 — Faithful ports stay bit-for-bit {#M.HELP-LAW-3}
 When a helper ports an existing implementation (e.g. `AbstractArtGenerator` mirrors
 mindattic.com's `generateProjectArt`), it must consume its RNG in the same order and
 reuse data tables verbatim, so output is identical across the stack. Determinism is
 locked by tests; changing the stream is a breaking change (a new whole-number version,
 [HOUSE-LAW-1](../../MindAttic.HouseRules.md#HOUSE-LAW-1)) and is recorded here in the bible.
 
-### HLP-LAW-4 — Every helper is locked by tests {#HLP-LAW-4}
+### M.HELP-LAW-4 — Every helper is locked by tests {#M.HELP-LAW-4}
 No helper ships without NUnit tests asserting its core invariant (determinism /
 correctness), output shape, and edge/error cases. A behaviour is `✅` in
 [USER_STORIES](USER_STORIES.md) only when a named test proves it.

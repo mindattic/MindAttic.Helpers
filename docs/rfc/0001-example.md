@@ -1,7 +1,7 @@
 ---
 codex: 1
 project: MindAttic.Helpers
-code: HLP
+code: M.HELP
 layer: rfc
 status: planned
 updated: 2026-06-07
@@ -11,9 +11,9 @@ updated: 2026-06-07
 
 ## Problem
 Two of the library's promises are enforced only by convention today:
-HLP-LAW-1 (zero third-party runtime dependencies) and the §8 quality bar's "XML docs
+M.HELP-LAW-1 (zero third-party runtime dependencies) and the §8 quality bar's "XML docs
 on all public members". Both are asserted by inspection (stories
-[HLP-US-C1](../USER_STORIES.md), [HLP-US-C2](../USER_STORIES.md) are 🟡), not proven,
+[M.HELP-US-C1](../USER_STORIES.md), [M.HELP-US-C2](../USER_STORIES.md) are 🟡), not proven,
 so a future change could regress them silently.
 
 ## Options compared
@@ -25,11 +25,11 @@ so a future change could regress them silently.
 
 ## Decision
 (Planned — not yet adopted.) Lean toward Option 3: add a dependency-guard check and turn
-on warnings-as-errors, closing HLP-US-C1 and HLP-US-C2 to ✅ once they are proven.
+on warnings-as-errors, closing M.HELP-US-C1 and M.HELP-US-C2 to ✅ once they are proven.
 
 ## What NOT to do
 - Do not add any runtime dependency just to implement the guard (would violate the very
-  law being protected — HLP-LAW-1).
+  law being protected — M.HELP-LAW-1).
 - Do not silence CS1591 with blanket `#pragma`/`<NoWarn>`; that defeats the purpose.
 
 ## Phased plan (with risk)
@@ -39,5 +39,5 @@ on warnings-as-errors, closing HLP-US-C1 and HLP-US-C2 to ✅ once they are prov
 3. Update the stories to ✅ with the new test/check names cited.
 
 ## Graduates into:
-[BIBLE §5 — HLP-LAW-1](../BIBLE.md#HLP-LAW-1), [BIBLE §8](../BIBLE.md#HLP-§8),
-stories [HLP-US-C1 / HLP-US-C2](../USER_STORIES.md).
+[BIBLE §5 — M.HELP-LAW-1](../BIBLE.md#M.HELP-LAW-1), [BIBLE §8](../BIBLE.md#M.HELP-§8),
+stories [M.HELP-US-C1 / M.HELP-US-C2](../USER_STORIES.md).
