@@ -9,8 +9,10 @@ utility helpers shared across the MindAttic ecosystem — each helper is a singl
 static class with a stable, faithfully-ported behaviour.
 
 ## 3. What it is NOT
-- **NOT an application or service.** There is no host, no DI graph, no entry point —
-  it is a class library (`MindAttic.Helpers.csproj`, `IsPackable=true`).
+- **NOT an application or service.** The library itself has no host, no DI graph, no
+  entry point — it is a class library (`MindAttic.Helpers.csproj`, `IsPackable=true`).
+  `MindAttic.Helpers.Ascii.Tool` is a separate, thin `dotnet tool` console wrapper
+  around one helper (`AsciiAligner`), not the library gaining an entry point.
 - **NOT a grab-bag of stateful utilities.** Helpers are pure static classes with no
   shared mutable state, no singletons, no configuration.
 - **NOT a dependency hub.** It must not take on third-party runtime dependencies; a
@@ -66,6 +68,10 @@ correctness), output shape, and edge/error cases. A behaviour is `✅` in
   per step without knowing the final length up front.
 - **`PiResult`** — the `readonly record struct` returned by `PiHelper.Calculate`.
 - **Memory guard** — `PiHelper`'s best-effort RAM check (default stop below 33% free).
+- **Block** (Ascii) — a run of consecutive non-blank lines in text passed to
+  `AsciiAligner`; blank lines delimit blocks and each is aligned independently.
+- **Rule/fill run** — a trailing sequence of the same rule character (e.g. `---`) at
+  the end of a line; `AsciiAligner` extends this run rather than inserting a gap.
 
 ## Status index (stories)
 - done: 17  partial: 2  planned: 0

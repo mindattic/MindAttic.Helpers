@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>MindAttic.Helpers.Ascii.Tool</RootNamespace>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>ascii-align</ToolCommandName>
+    <PackageId>MindAttic.Helpers.Ascii.Tool</PackageId>
+    <Title>ascii-align</Title>
+    <Description>Shell-invokable wrapper around MindAttic.Helpers.Ascii.AsciiAligner: pads ASCII box/table diagrams to perfect right-edge alignment.</Description>
+    <PackageTags>mindattic;helpers;ascii;cli;dotnet-tool</PackageTags>
+    <PackageProjectUrl>https://github.com/mindattic/MindAttic.Helpers</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/mindattic/MindAttic.Helpers.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MindAttic.Helpers\MindAttic.Helpers.csproj" />
+  </ItemGroup>
+
+</Project>

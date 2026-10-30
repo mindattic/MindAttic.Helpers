@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>MindAttic.Helpers</title>
-<meta name="description" content="Dependency-free .NET 10 helpers: a deterministic art generator that turns any string into a stable SVG avatar, and a streaming pi digit generator that stops before it runs out of memory.">
+<meta name="description" content="Dependency-free .NET 10 helpers: a deterministic art generator that turns any string into a stable SVG avatar, a streaming pi digit generator that stops before it runs out of memory, and an ASCII diagram aligner so a ...">
 <meta name="generator" content="MindAttic Codex build-readme.ps1">
-<meta name="generated" content="2026-10-03">
+<meta name="generated" content="2026-10-30">
 <style>:root{
   --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;
   --border:#30363d;
@@ -111,9 +111,10 @@ pre:hover .cpbtn{opacity:1}
   </nav>
   <main id="content">
 <h1 id="mindattichelpers">MindAttic.Helpers</h1>
-<p>Dependency-free .NET 10 helpers: a deterministic art generator that turns any string into a stable SVG avatar, and a streaming pi digit generator that stops before it runs out of memory.</p>
-<p><a href="MindAttic.Helpers/MindAttic.Helpers.csproj"><img src="https://img.shields.io/badge/.NET-10.0-512BD4" alt=".NET"></a> <a href="MindAttic.Helpers"><img src="https://img.shields.io/badge/language-C%23-239120" alt="C#"></a> <a href="MindAttic.Helpers/MindAttic.Helpers.csproj"><img src="https://img.shields.io/badge/dependencies-BCL%20only-blue" alt="Dependencies"></a> <a href="MindAttic.Helpers.Tests"><img src="https://img.shields.io/badge/tests-16%20NUnit-brightgreen" alt="Tests"></a> <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a></p>
+<p>Dependency-free .NET 10 helpers: a deterministic art generator that turns any string into a stable SVG avatar, a streaming pi digit generator that stops before it runs out of memory, and an ASCII diagram aligner so a box's right-hand border never drifts.</p>
+<p><a href="MindAttic.Helpers/MindAttic.Helpers.csproj"><img src="https://img.shields.io/badge/.NET-10.0-512BD4" alt=".NET"></a> <a href="MindAttic.Helpers"><img src="https://img.shields.io/badge/language-C%23-239120" alt="C#"></a> <a href="MindAttic.Helpers/MindAttic.Helpers.csproj"><img src="https://img.shields.io/badge/dependencies-BCL%20only-blue" alt="Dependencies"></a> <a href="MindAttic.Helpers.Tests"><img src="https://img.shields.io/badge/tests-23%20NUnit-brightgreen" alt="Tests"></a> <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a></p>
 <pre><code class="language-csharp">using MindAttic.Helpers;
+using MindAttic.Helpers.Ascii;
 
 // One line: a stable 300x300 portrait for any id, ready for &lt;img src&gt;.
 string avatar = AbstractArtGenerator.DataUri("persona-0042");
@@ -123,13 +124,20 @@ bool stable = AbstractArtGenerator.Svg("persona-0042") == AbstractArtGenerator.S
 
 // Pi to 1000 places, halting cleanly if free RAM falls below 33%.
 var pi = PiHelper.Calculate(1000);
-Console.WriteLine(pi.Value);   // "3.14159265358979..."</code></pre>
+Console.WriteLine(pi.Value);   // "3.14159265358979..."
+
+// A drifting box border, fixed in one call.
+string fixedDiagram = AsciiAligner.Align("+-- Stats --+\n| a much longer row |");</code></pre>
+<pre><code class="language-powershell"># Or from any shell, via the ascii-align dotnet tool:
+ascii-align --check diagram.txt   # exit 1 if misaligned
+ascii-align --write diagram.txt   # fix it in place</code></pre>
 <h2 id="why">Why</h2>
 <ul>
 <li>Give every user, project or persona a distinctive picture without storing a single image file.</li>
 <li>Get the identical picture on the server, in the browser and in a build step, because the output depends only on the seed string.</li>
 <li>Drop the result straight into an <code>&lt;img&gt;</code> tag or a CSS background as a data URI, with no network calls, fonts or files to ship.</li>
 <li>Compute large numbers of pi digits without risking an out-of-memory crash on a shared machine.</li>
+<li>Stop hand-aligning ASCII diagrams by eye — a mechanical pass always gets the right edge straight.</li>
 <li>Add nothing to your dependency graph: the library uses the .NET base class library only.</li>
 </ul>
 <h2 id="features">Features</h2>
@@ -147,13 +155,22 @@ Console.WriteLine(pi.Value);   // "3.14159265358979..."</code></pre>
 <li>Checks free system memory every 256 digits and stops early once it drops below a threshold you choose (33% by default), reporting that it did.</li>
 <li>Returns a <code>PiResult</code> with the digits, the number of places produced, whether it stopped for memory, and the last free-memory reading.</li>
 </ul>
+<h3 id="asciialigner-mindattichelpersascii">AsciiAligner (<code>MindAttic.Helpers.Ascii</code>)</h3>
+<ul>
+<li>Pads every line of an ASCII box/table diagram out to its own block's widest line — fixes the right-edge drift that comes from hand-counting characters.</li>
+<li>Extends an existing trailing rule/fill run (<code>-----+</code> stays a clean rule) instead of inserting an ugly gap; pads a plain content row with spaces just before its own wall character.</li>
+<li>Treats each blank-line-separated group of lines as its own block, so multiple independent diagrams in one file/string don't bleed into each other.</li>
+<li>Understands common box-drawing characters (<code>┌─┐│└┘</code> etc.) as well as plain ASCII (<code>+-|</code>).</li>
+<li>Ships with <code>MindAttic.Helpers.Ascii.Tool</code>, a <code>dotnet tool</code> console wrapper (<code>ascii-align</code>) so any shell can validate (<code>--check</code>) or fix (<code>--write</code>) a diagram file without writing C#.</li>
+<li>Faithful port of <code>MindAttic.Orchestrator/tools/ascii_align.py</code> (M.ORCH-T1305), which is retired now that this is the canonical, cross-repo version.</li>
+</ul>
 <h2 id="quick-start">Quick start</h2>
 <p>Prerequisites: the .NET 10 SDK.</p>
 <pre><code class="language-powershell">git clone https://github.com/mindattic/MindAttic.Helpers.git
 cd MindAttic.Helpers
 dotnet build
 dotnet test</code></pre>
-<p>You should see the 16 NUnit tests pass. To use the library from another project, add a project reference (the package is configured for NuGet but not yet published):</p>
+<p>You should see the 23 NUnit tests pass. To use the library from another project, add a project reference (the package is configured for NuGet but not yet published):</p>
 <pre><code class="language-xml">&lt;ItemGroup&gt;
   &lt;ProjectReference Include="..\MindAttic.Helpers\MindAttic.Helpers\MindAttic.Helpers.csproj" /&gt;
 &lt;/ItemGroup&gt;</code></pre>
@@ -161,6 +178,8 @@ dotnet test</code></pre>
 <pre><code class="language-xml">&lt;PackageReference Include="MindAttic.Helpers" Version="1.0.0" /&gt;</code></pre>
 <p>Either way the namespace is the same:</p>
 <pre><code class="language-csharp">using MindAttic.Helpers;</code></pre>
+<p>The <code>ascii-align</code> CLI isn't published as a global tool yet either; run it from the repo with:</p>
+<pre><code class="language-powershell">dotnet run --project MindAttic.Helpers.Ascii.Tool -- --check path\to\diagram.txt</code></pre>
 <h2 id="usage">Usage</h2>
 <h3 id="art-in-a-razor-page">Art in a Razor page</h3>
 <pre><code class="language-razor">&lt;img src="@AbstractArtGenerator.DataUri(persona.Id)" alt="@persona.Name" /&gt;</code></pre>
@@ -186,6 +205,16 @@ PiHelper.Calculate(4).Value;   // "3.1415"
 // Disable the guard to always compute the full count.
 var full = PiHelper.Calculate(1000, minFreeMemoryFraction: 0);
 // full.DecimalPlacesProduced == 1000</code></pre>
+<h3 id="aligning-an-ascii-diagram">Aligning an ASCII diagram</h3>
+<pre><code class="language-csharp">using MindAttic.Helpers.Ascii;
+
+string text = "+-- Stats --+\n| a much longer row of content |";
+Console.WriteLine(AsciiAligner.Align(text));
+// +-- Stats ---------------------+
+// | a much longer row of content |
+
+AsciiAligner.IsAligned(text);          // false
+AsciiAligner.IsAligned(AsciiAligner.Align(text));   // true</code></pre>
 <h2 id="api">API</h2>
 <h3 id="abstractartgenerator">AbstractArtGenerator</h3>
 <p>A static class in <code>MindAttic.Helpers</code>.</p>
@@ -233,6 +262,25 @@ var full = PiHelper.Calculate(1000, minFreeMemoryFraction: 0);
 <td><code>Value</code> is always a correct prefix of pi; <code>StoppedForMemory</code> is true only when the guard halted the run.</td>
 </tr>
 </tbody></table>
+<h3 id="asciialigner">AsciiAligner</h3>
+<p>A static class in <code>MindAttic.Helpers.Ascii</code>.</p>
+<table><thead><tr>
+<th>Member</th>
+<th>Signature</th>
+<th>Description</th>
+</tr></thead><tbody>
+<tr>
+<td><code>Align</code></td>
+<td><code>static string Align(string text)</code></td>
+<td>Aligns every blank-line-separated block independently; blank lines pass through unchanged. Preserves trailing-newline presence.</td>
+</tr>
+<tr>
+<td><code>IsAligned</code></td>
+<td><code>static bool IsAligned(string text)</code></td>
+<td><code>true</code> when <code>Align(text) == text</code>.</td>
+</tr>
+</tbody></table>
+<p>The <code>ascii-align</code> console wrapper (<code>MindAttic.Helpers.Ascii.Tool</code>) exposes the same behaviour as a CLI: <code>ascii-align [path]</code> (stdin if omitted), <code>--check</code> (exit 1 if misaligned), <code>--write</code> (rewrite the file in place).</p>
 <h2 id="how-it-works">How it works</h2>
 <pre><code class="language-text">AbstractArtGenerator.Svg("persona-0042")
 
@@ -245,9 +293,10 @@ var full = PiHelper.Calculate(1000, minFreeMemoryFraction: 0);
   &lt;svg 300x300&gt; gradient rect + shapes + accent letter &lt;/svg&gt;   (no I/O, no fonts shipped)</code></pre>
 <p>The generator's output depends only on the seed, so the same slug yields pixel-identical art anywhere it runs.</p>
 <p>PiHelper keeps the spigot's <code>q, r, t, k, n, l</code> state as <code>BigInteger</code>s and emits one correct digit per step without knowing the final length. Those integers grow roughly linearly with the digit count, so every 256 digits it reads the system-wide memory load from <code>GC.GetGCMemoryInfo()</code> and stops once free RAM falls below the threshold. That reading is a recent GC snapshot, not a live gauge, and inside a container it reflects the cgroup limit: it is a safety valve against running out of memory, not a precise allocator.</p>
+<p><code>AsciiAligner.Align</code> splits the input on blank lines into independent blocks, finds each block's widest (right-trimmed) line, then pads every other line out to that width: a line ending in a rule/fill character (<code>-=_.~</code> or box-drawing dashes) gets that character repeated, anything else gets spaces inserted just before its own trailing wall character (<code>|</code>, <code>+</code>, a box-drawing corner, <code>&gt;</code>). No parsing of box structure happens — it's a per-line text operation, so it has no notion of nested boxes or column alignment within a row, only overall line width per block.</p>
 <h2 id="building">Building</h2>
-<pre><code class="language-powershell">dotnet build    # library + tests (net10.0, TreatWarningsAsErrors, Nullable enabled)
-dotnet test     # 16 NUnit tests
+<pre><code class="language-powershell">dotnet build    # library + tests + ascii-align tool (net10.0, TreatWarningsAsErrors, Nullable enabled)
+dotnet test     # 23 NUnit tests
 dotnet pack MindAttic.Helpers/MindAttic.Helpers.csproj -c Release   # produces the NuGet package</code></pre>
 <ul>
 <li>Target framework: <code>net10.0</code>. Shared compiler settings live in <code>Directory.Build.props</code>: latest language version, nullable enabled, warnings as errors with <code>CS1591</code> excluded.</li>
@@ -270,18 +319,29 @@ dotnet pack MindAttic.Helpers/MindAttic.Helpers.csproj -c Release   # produces t
 <td>9</td>
 <td>Zero and four places, 99 places against known pi, determinism, longer runs extend shorter ones, guard disabled, impossible threshold stops early, argument validation.</td>
 </tr>
+<tr>
+<td><code>AsciiAlignerTests</code></td>
+<td>7</td>
+<td>Short rows padded to the block's widest, a rule run extends instead of gapping, box-drawing characters, independent blank-line-separated blocks, already-aligned text is a no-op, trailing-newline presence preserved, unbordered text still right-padded.</td>
+</tr>
 </tbody></table>
 <h2 id="project-layout">Project layout</h2>
 <pre><code class="language-text">MindAttic.Helpers/
 ├── MindAttic.Helpers/                     the library (IsPackable=true)
 │   ├── AbstractArtGenerator.cs
 │   ├── PiHelper.cs
+│   ├── Ascii/
+│   │   └── AsciiAligner.cs
 │   └── MindAttic.Helpers.csproj
 ├── MindAttic.Helpers.Tests/               NUnit test project (IsPackable=false)
 │   ├── AbstractArtGeneratorTests.cs       7 tests
 │   ├── PiHelperTests.cs                   9 tests
+│   ├── AsciiAlignerTests.cs               7 tests
 │   └── MindAttic.Helpers.Tests.csproj
-├── MindAttic.Helpers.slnx                 solution stitching both projects
+├── MindAttic.Helpers.Ascii.Tool/          ascii-align dotnet-tool console wrapper
+│   ├── Program.cs
+│   └── MindAttic.Helpers.Ascii.Tool.csproj
+├── MindAttic.Helpers.slnx                 solution stitching all three projects
 ├── Directory.Build.props                  shared compiler settings
 ├── docs/                                  Codex documentation
 ├── tools/
@@ -300,8 +360,10 @@ dotnet pack MindAttic.Helpers/MindAttic.Helpers.csproj -c Release   # produces t
 <h2 id="limitations">Limitations</h2>
 <ul>
 <li>The package is configured but not yet published to NuGet; reference the project directly for now.</li>
+<li><code>ascii-align</code> isn't published as a global <code>dotnet tool</code> yet either; run it with <code>dotnet run --project MindAttic.Helpers.Ascii.Tool</code> in the meantime.</li>
 <li>No other MindAttic repo references this library yet.</li>
 <li>The pi memory guard is a best-effort snapshot and can be disabled; it is not a hard allocation limit.</li>
+<li><code>AsciiAligner</code> works line-by-line per block; it doesn't parse box structure, so it can't detect or fix misaligned <em>interior</em> columns within a multi-column row, only each line's overall width.</li>
 </ul>
 <h2 id="documentation">Documentation</h2>
 <p>This repo follows the MindAttic Codex documentation standard: a fact lives in exactly one layer, linked by stable ID.</p>
@@ -320,7 +382,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools\build-readme.ps1   # r
 <p>MIT. See <a href="LICENSE">LICENSE</a>.</p>
 <p>Part of <a href="https://mindattic.com">MindAttic</a> — see more projects at <a href="https://github.com/mindattic">github.com/mindattic</a>. Related: <a href="https://github.com/mindattic/MindAttic.Legion">MindAttic.Legion</a>, <a href="https://github.com/mindattic/MindAttic.Vault">MindAttic.Vault</a>.</p>
 
-    <p class="codex-footer">Generated 2026-10-03 by the shared MindAttic Codex engine (<code>codex-standard/build-readme.ps1</code>) from <code>README.md</code>. Edit the Markdown source, not this file.</p>
+    <p class="codex-footer">Generated 2026-10-30 by the shared MindAttic Codex engine (<code>codex-standard/build-readme.ps1</code>) from <code>README.md</code>. Edit the Markdown source, not this file.</p>
   </main>
 </div>
 <script>(function(){

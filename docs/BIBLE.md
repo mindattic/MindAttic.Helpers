@@ -4,7 +4,7 @@ project: MindAttic.Helpers
 code: M.HELP
 layer: bible
 status: living
-updated: 2026-10-03
+updated: 2026-10-30
 ---
 
 # MindAttic.Helpers — Project Bible
@@ -19,7 +19,8 @@ static class with a stable, faithfully-ported behaviour.
 ## 2. The product promise {#M.HELP-§2}
 - **Deterministic by construction.** Given the same input, a helper always returns
   the same output, anywhere it runs (server, client, build step). See
-  [`AbstractArtGenerator`](#M.HELP-§4) and [`PiHelper`](#M.HELP-§4).
+  [`AbstractArtGenerator`](#M.HELP-§4), [`PiHelper`](#M.HELP-§4) and
+  [`AsciiAligner`](#M.HELP-§4).
 - **Zero runtime dependencies.** The library references only the .NET base class
   library (`System.*`). No NuGet runtime dependencies ship with the package.
 - **Drop-in, self-contained.** Each helper does one thing and ships no fonts, files,
@@ -30,8 +31,10 @@ static class with a stable, faithfully-ported behaviour.
   output matches across the stack.
 
 ## 3. What it is NOT {#M.HELP-§3}
-- **NOT an application or service.** There is no host, no DI graph, no entry point —
-  it is a class library (`MindAttic.Helpers.csproj`, `IsPackable=true`).
+- **NOT an application or service.** The library itself has no host, no DI graph, no
+  entry point — it is a class library (`MindAttic.Helpers.csproj`, `IsPackable=true`).
+  `MindAttic.Helpers.Ascii.Tool` is a separate, thin `dotnet tool` console wrapper
+  around one helper (`AsciiAligner`), not the library gaining an entry point.
 - **NOT a grab-bag of stateful utilities.** Helpers are pure static classes with no
   shared mutable state, no singletons, no configuration.
 - **NOT a dependency hub.** It must not take on third-party runtime dependencies; a
@@ -51,9 +54,13 @@ static class with a stable, faithfully-ported behaviour.
                  │                                            │
    places:int  ─►│  PiHelper (static)                        │─► PiResult (record struct)
                  │    Gibbons unbounded spigot + mem guard   │
+                 │                                            │
+   text:string ─►│  Ascii.AsciiAligner (static)               │─► aligned text
+                 │    per-block right-edge padding            │
                  └───────────────────────────────────────────┘
-                              ▲ referenced by ▲
-                 MindAttic.Helpers.Tests (NUnit, IsPackable=false)
+                     ▲ referenced by ▲            ▲ referenced by ▲
+      MindAttic.Helpers.Tests            MindAttic.Helpers.Ascii.Tool
+      (NUnit, IsPackable=false)          (console, PackAsTool, "ascii-align")
 ```
 
 ### 4.1 Projects
@@ -62,11 +69,14 @@ static class with a stable, faithfully-ported behaviour.
   `GenerateDocumentationFile=true`, MIT, packs `README.md`.
 - `MindAttic.Helpers.Tests/MindAttic.Helpers.Tests.csproj` — NUnit test project
   (`IsPackable=false`), references the library.
-- `MindAttic.Helpers.slnx` — solution stitching both projects.
+- `MindAttic.Helpers.Ascii.Tool/MindAttic.Helpers.Ascii.Tool.csproj` — thin console
+  wrapper around `AsciiAligner`, packed as a `dotnet tool` (`ToolCommandName=ascii-align`)
+  so any shell, in any repo, can validate/fix a diagram without a C# host project.
+- `MindAttic.Helpers.slnx` — solution stitching all three projects.
 
 ### 4.2 Domain model (NOUNS)
-- **Helper** — a `public static` class in namespace `MindAttic.Helpers`; pure,
-  deterministic, dependency-free.
+- **Helper** — a `public static` class in namespace `MindAttic.Helpers` (or a nested
+  namespace such as `MindAttic.Helpers.Ascii`); pure, deterministic, dependency-free.
 - **`AbstractArtGenerator`** — turns a string `seed` into a stable 300×300 SVG
   fingerprint. Holds the 16 curated `Palettes` and a private `Rng` struct.
 - **`Rng`** — private struct: FNV-1a (32-bit) seed over UTF-16 code units, advanced
@@ -75,12 +85,19 @@ static class with a stable, faithfully-ported behaviour.
   memory safety valve.
 - **`PiHelper.PiResult`** — `readonly record struct` (Value, DecimalPlacesProduced,
   StoppedForMemory, FreeMemoryFraction): the outcome of a `Calculate` run.
+- **`Ascii.AsciiAligner`** — pads every line of a blank-line-separated ASCII
+  box/table block out to that block's widest line, so a hand-drawn diagram's right
+  edge stops drifting. Faithful C# port of `MindAttic.Orchestrator/tools/ascii_align.py`
+  (M.ORCH-T1305; that script is retired once this version ships).
 
 ### 4.3 Key services (VERBS)
 - `AbstractArtGenerator.Svg(seed, initial?)` — raw 300×300 SVG markup.
 - `AbstractArtGenerator.DataUri(seed, initial?)` — base64 `data:image/svg+xml` URI.
 - `PiHelper.Calculate(decimalPlaces, minFreeMemoryFraction = 0.33)` — produce π to
   `decimalPlaces` places, stopping early if free RAM drops below the fraction.
+- `Ascii.AsciiAligner.Align(text)` — the aligned text, one independently-padded block
+  per blank-line-separated group.
+- `Ascii.AsciiAligner.IsAligned(text)` — `true` when `Align(text) == text`.
 
 ## 5. The Laws {#M.HELP-§5}
 This project **inherits the org-wide House Rules** verbatim — see
@@ -117,15 +134,23 @@ correctness), output shape, and edge/error cases. A behaviour is `✅` in
 [USER_STORIES](USER_STORIES.md) only when a named test proves it.
 
 ## 6. Verified state {#M.HELP-§6}
-Evidence re-confirmed **2026-10-03** on `net10.0` (Windows):
+Evidence re-confirmed **2026-10-30** on `net10.0` (Windows):
 - ✅ **Build**: `dotnet build` → Build succeeded. 0 Warning(s), 0 Error(s).
-- ✅ **Tests**: `dotnet test MindAttic.Helpers.slnx` → **16 passed, 0 failed, 0 skipped**.
+- ✅ **Tests**: `dotnet test MindAttic.Helpers.slnx` → **23 passed, 0 failed, 0 skipped**.
   - `AbstractArtGeneratorTests` — 7 tests (determinism, distinctness, well-formed
     SVG, data-URI round-trip, initial override + default, 16-palette shape).
   - `PiHelperTests` — 9 tests (bare 3, 3.1415, 99-place reference match, determinism,
     prefix-extension, guard disabled, impossible threshold stops at the interval,
     negative-places + out-of-range-threshold throw).
-- Proven helpers: [`AbstractArtGenerator`](#M.HELP-§4), [`PiHelper`](#M.HELP-§4).
+  - `AsciiAlignerTests` — 7 tests (pads short rows to the block's widest, extends an
+    existing rule run instead of inserting a gap, box-drawing characters, independent
+    blank-line-separated blocks, already-aligned text is a no-op, trailing-newline
+    presence preserved, plain unbordered text still gets right-padded).
+- ✅ **CLI wrapper**: `ascii-align --check` / default / `--write` smoke-tested against a
+  deliberately misaligned file — exits 1 under `--check`, prints the fixed diagram by
+  default, and `--write` then `--check` round-trips to exit 0.
+- Proven helpers: [`AbstractArtGenerator`](#M.HELP-§4), [`PiHelper`](#M.HELP-§4),
+  [`Ascii.AsciiAligner`](#M.HELP-§4).
 - See [USER_STORIES.md](USER_STORIES.md) for per-capability test citations.
 
 ## 7. Active frontier {#M.HELP-§7}
@@ -135,6 +160,9 @@ Evidence re-confirmed **2026-10-03** on `net10.0` (Windows):
   [USER_STORIES.md → Priority backlog](USER_STORIES.md).
 - Direction: grow the helper set (each new helper a pure static class with tests),
   keeping M.HELP-LAW-1 (zero deps) intact. Candidate additions are tracked as ⬜ stories.
+- `MindAttic.Helpers.Ascii.Tool` is not yet published as a NuGet `dotnet tool` package
+  (same limitation as the library itself — see README.md → Limitations); for now
+  it is run via `dotnet run --project MindAttic.Helpers.Ascii.Tool`.
 
 ## 8. Quality bar {#M.HELP-§8}
 A helper is "done" (`✅`) when:
@@ -158,3 +186,7 @@ A helper is "done" (`✅`) when:
   per step without knowing the final length up front.
 - **`PiResult`** — the `readonly record struct` returned by `PiHelper.Calculate`.
 - **Memory guard** — `PiHelper`'s best-effort RAM check (default stop below 33% free).
+- **Block** (Ascii) — a run of consecutive non-blank lines in text passed to
+  `AsciiAligner`; blank lines delimit blocks and each is aligned independently.
+- **Rule/fill run** — a trailing sequence of the same rule character (e.g. `---`) at
+  the end of a line; `AsciiAligner` extends this run rather than inserting a gap.
