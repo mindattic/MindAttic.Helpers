@@ -51,7 +51,7 @@ public sealed record CandleChartOptions
 
     /// <summary>
     /// The time one slot covers (a character in <see cref="CandleChartMode.Candles"/>, half of one in
-    /// <see cref="CandleChartMode.Braille"/>); null picks the smallest of 1, 2, 3, 5, 10, 15, 20, 25,
+    /// <see cref="CandleChartMode.Braille"/>); null picks the smallest of 1, 2, 3, 5, 10, 12, 15, 20, 25,
     /// 30, 40, 45, 60, 90, 120 or 240 minutes that fits.
     /// </summary>
     public TimeSpan? BucketSize { get; init; }
@@ -97,7 +97,7 @@ public sealed record CandleChartOptions
 /// </summary>
 public static class AsciiCandleChart
 {
-    private static readonly int[] AutoBucketMinutes = [1, 2, 3, 5, 10, 15, 20, 25, 30, 40, 45, 60, 90, 120, 240];
+    private static readonly int[] AutoBucketMinutes = [1, 2, 3, 5, 10, 12, 15, 20, 25, 30, 40, 45, 60, 90, 120, 240];
 
     /// <summary>Volume heights in eighths of a row.</summary>
     private const string Blocks = "▁▂▃▄▅▆▇█";
@@ -207,7 +207,7 @@ public static class AsciiCandleChart
             lines.Add(indent + GroupRow(columns, sessions));
         var minutes = bucket.TotalMinutes.ToString("0.##", inv);
         lines.Add(indent + (braille
-            ? $"⣿ high-low range, 2 x {minutes} min per character  {o.Separator} session break  ⠤⠤ reference"
+            ? $"⣿ high-low range, 2 x {minutes} min per character  {o.Separator} session break  dotted row = reference"
             : $"{o.UpBody} up  {o.DownBody} down  {o.Wick} high-low  {o.Separator} session break  {minutes}-min bars"));
 
         return string.Join('\n', lines.Select(l => Fit(l, o.Width)));
