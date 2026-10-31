@@ -62,6 +62,13 @@ ascii-align --write diagram.txt   # fix it in place
 - Ships with `MindAttic.Helpers.Ascii.Tool`, a `dotnet tool` console wrapper (`ascii-align`) so any shell can validate (`--check`) or fix (`--write`) a diagram file without writing C#.
 - Faithful port of `MindAttic.Orchestrator/tools/ascii_align.py` (M.ORCH-T1305), which is retired now that this is the canonical, cross-repo version.
 
+### AsciiCandleChart (`MindAttic.Helpers.Ascii`)
+
+- Draws OHLC bars as a text chart across labeled sessions (e.g. premarket / regular / after-hours per day); the time between sessions isn't drawn, so an overnight gap costs one separator column.
+- **Braille mode** (the default) packs 2 time slots x 4 price levels into every character (`⣿`), 8x the detail of one-glyph-per-cell ASCII; volume uses eighth-height blocks (`▁▂▃▄▅▆▇█`). **Candles mode** is pure ASCII (`|` wick, `#` up, `=` down).
+- Nice-step price axis, reference lines named at the right edge (`<- Thu close 24.31`), a `last` marker, time ticks, session names and day spans; the bucket size is picked automatically to fit the width.
+- Every output line is exactly `Width` characters, so the chart never drifts; deterministic and culture-invariant.
+
 ## Quick start
 
 Prerequisites: the .NET 10 SDK.
