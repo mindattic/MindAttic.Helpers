@@ -241,11 +241,11 @@ public static class AsciiCandleChart
         };
     }
 
-    /// <summary>Braille pane: every slot's high-low range filled as dots; reference lines dashed through it.</summary>
+    /// <summary>Braille pane: every slot's high-low range filled as dots; reference lines dashed through it. Dot-packing is <see cref="BrailleCanvas"/>'s (M.HELP-T20).</summary>
     private static string[] BraillePane(List<Column> columns, CandleChartOptions o, int levels, Func<double, int> level)
     {
-        var bits = new int[o.Height, columns.Count];
-        void Dot(int c, int slot, int y) => bits[y / 4, c] |= DotBit(slot, y % 4);
+        var canvas = new BrailleCanvas(columns.Count * 2, o.Height * 4);
+        void Dot(int c, int slot, int y) => canvas.SetDot(c * 2 + slot, y);
 
         for (int c = 0; c < columns.Count; c++)
         {
@@ -259,26 +259,17 @@ public static class AsciiCandleChart
             }
         }
 
+        var cells = canvas.RenderRows();
         var rows = new string[o.Height];
         for (int r = 0; r < o.Height; r++)
         {
             var sb = new StringBuilder(columns.Count);
             for (int c = 0; c < columns.Count; c++)
-                sb.Append(columns[c].Kind == ColumnKind.Separator ? o.Separator
-                    : bits[r, c] == 0 ? ' ' : (char)(0x2800 + bits[r, c]));
+                sb.Append(columns[c].Kind == ColumnKind.Separator ? o.Separator : cells[r][c]);
             rows[r] = sb.ToString();
         }
         return rows;
     }
-
-    /// <summary>The Unicode Braille bit for dot (x, y) of a 2x4 cell.</summary>
-    private static int DotBit(int x, int y) => (x, y) switch
-    {
-        (0, 3) => 0x40,
-        (1, 3) => 0x80,
-        (0, _) => 1 << y,
-        _ => 1 << (y + 3),
-    };
 
     /// <summary>Candles pane: separators, grid dots, reference lines, then one candle per character on top.</summary>
     private static string[] CandlePane(List<Column> columns, CandleChartOptions o, SortedDictionary<int, string> tickRows, Func<double, int> row)

@@ -1,8 +1,8 @@
 # MindAttic.Helpers
 
-Dependency-free .NET 10 helpers: a deterministic art generator that turns any string into a stable SVG avatar, a streaming pi digit generator that stops before it runs out of memory, and an ASCII diagram aligner so a box's right-hand border never drifts.
+Dependency-free .NET 10 helpers: a deterministic art generator that turns any string into a stable SVG avatar, a streaming pi digit generator that stops before it runs out of memory, an ASCII diagram aligner so a box's right-hand border never drifts, and a family of ASCII/Braille renderers (bar charts, OHLC candle charts, and Braille-dot-resolution app-mockup wireframes) sharing one dot-packing canvas.
 
-[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](MindAttic.Helpers/MindAttic.Helpers.csproj) [![C#](https://img.shields.io/badge/language-C%23-239120)](MindAttic.Helpers) [![Dependencies](https://img.shields.io/badge/dependencies-BCL%20only-blue)](MindAttic.Helpers/MindAttic.Helpers.csproj) [![Tests](https://img.shields.io/badge/tests-23%20NUnit-brightgreen)](MindAttic.Helpers.Tests) [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](MindAttic.Helpers/MindAttic.Helpers.csproj) [![C#](https://img.shields.io/badge/language-C%23-239120)](MindAttic.Helpers) [![Dependencies](https://img.shields.io/badge/dependencies-BCL%20only-blue)](MindAttic.Helpers/MindAttic.Helpers.csproj) [![Tests](https://img.shields.io/badge/tests-80%20NUnit-brightgreen)](MindAttic.Helpers.Tests) [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 ```csharp
 using MindAttic.Helpers;
@@ -65,9 +65,21 @@ ascii-align --write diagram.txt   # fix it in place
 ### AsciiCandleChart (`MindAttic.Helpers.Ascii`)
 
 - Draws OHLC bars as a text chart across labeled sessions (e.g. premarket / regular / after-hours per day); the time between sessions isn't drawn, so an overnight gap costs one separator column.
-- **Braille mode** (the default) packs 2 time slots x 4 price levels into every character (`⣿`), 8x the detail of one-glyph-per-cell ASCII; volume uses eighth-height blocks (`▁▂▃▄▅▆▇█`). **Candles mode** is pure ASCII (`|` wick, `#` up, `=` down).
+- **Braille mode** (the default) packs 2 time slots x 4 price levels into every character (`⣿`), 8x the detail of one-glyph-per-cell ASCII, via `BrailleCanvas`; volume uses eighth-height blocks (`▁▂▃▄▅▆▇█`). **Candles mode** is pure ASCII (`|` wick, `#` up, `=` down).
 - Nice-step price axis, reference lines named at the right edge (`<- Thu close 24.31`), a `last` marker, time ticks, session names and day spans; the bucket size is picked automatically to fit the width.
 - Every output line is exactly `Width` characters, so the chart never drifts; deterministic and culture-invariant.
+
+### BrailleCanvas (`MindAttic.Helpers.Ascii`)
+
+- A dot-addressable canvas that packs a 2-wide x 4-tall grid of dots into every character using Unicode Braille Patterns (`U+2800` + dot bits) — 8x the resolution of one glyph per cell, while every line still stays single-width and lines up.
+- `SetDot`, `DrawLine` (Bresenham), and `DrawRect` (outline or filled) build up the dot grid; `RenderRows()`/`Render()` emit the text. Out-of-range dots are silently ignored rather than throwing, since chart/mockup code routinely draws right to the edge.
+- The shared primitive behind `AsciiCandleChart`'s Braille mode and `AsciiMockup`, extracted so both use one dot-packing implementation instead of two.
+
+### AsciiMockup (`MindAttic.Helpers.Ascii`)
+
+- Renders labeled rectangular panels — an app/UI wireframe — as Braille-dot-resolution box outlines, built entirely on `BrailleCanvas`.
+- Each panel's label is centered just inside its top border; every output line is exactly the requested width.
+- General-purpose: it draws panels/boxes/labels for any app's screens, not any one app's layout.
 
 ## Quick start
 
@@ -80,7 +92,7 @@ dotnet build
 dotnet test
 ```
 
-You should see the 23 NUnit tests pass. To use the library from another project, add a project reference (the package is configured for NuGet but not yet published):
+You should see the 80 NUnit tests pass (3 pre-existing `AsciiChartTests` BarChart failures — M.HELP-T15/T16/T17/T19 — are tracked separately and unrelated to the rest of the suite). To use the library from another project, add a project reference (the package is configured for NuGet but not yet published):
 
 ```xml
 <ItemGroup>
@@ -163,6 +175,28 @@ AsciiAligner.IsAligned(text);          // false
 AsciiAligner.IsAligned(AsciiAligner.Align(text));   // true
 ```
 
+### Sketching a wireframe
+
+```csharp
+using MindAttic.Helpers.Ascii;
+
+var panels = new[]
+{
+    new MockupPanel(0, 0, 40, 10, "Sidebar"),
+    new MockupPanel(40, 0, 40, 10, "Main"),
+};
+Console.WriteLine(AsciiMockup.Render(panels, width: 80, height: 10, title: "Dashboard"));
+```
+
+`AsciiMockup` is built entirely on `BrailleCanvas`, which you can also draw on directly:
+
+```csharp
+var canvas = new BrailleCanvas(dotWidth: 20, dotHeight: 8);
+canvas.DrawRect(0, 0, 20, 8);
+canvas.DrawLine(0, 0, 19, 7);
+Console.WriteLine(canvas.Render());
+```
+
 ## API
 
 ### AbstractArtGenerator
@@ -196,6 +230,51 @@ A static class in `MindAttic.Helpers.Ascii`.
 
 The `ascii-align` console wrapper (`MindAttic.Helpers.Ascii.Tool`) exposes the same behaviour as a CLI: `ascii-align [path]` (stdin if omitted), `--check` (exit 1 if misaligned), `--write` (rewrite the file in place).
 
+### AsciiChart
+
+A static class in `MindAttic.Helpers.Ascii`.
+
+| Member | Signature | Description |
+| --- | --- | --- |
+| `ChartPoint` | `readonly record struct ChartPoint(string Label, double Value)` | One labeled value to plot as a bar. |
+| `BarChart` | `static string BarChart(IReadOnlyList<ChartPoint> points, int maxBarWidth = 40, double? scaleMax = null, char fillChar = '#', double? markerValue = null, char markerChar = '\|', string? valueFormat = null)` | One bar per line: a right-aligned label, a bar scaled to `maxBarWidth`, and the formatted value. Throws on an empty series or a non-positive `maxBarWidth`. |
+
+### AsciiCandleChart
+
+A static class in `MindAttic.Helpers.Ascii`.
+
+| Member | Signature | Description |
+| --- | --- | --- |
+| `OhlcBar` | `readonly record struct OhlcBar(DateTime Time, double Open, double High, double Low, double Close, double Volume = 0)` | One open/high/low/close/volume bar. |
+| `ChartSession` | `sealed record ChartSession(string Label, DateTime Start, DateTime End, string Group = "")` | A labeled, contiguous stretch of time drawn as one block of columns. |
+| `ChartReferenceLine` | `sealed record ChartReferenceLine(string Label, double Value, char LineChar = '-')` | A horizontal reference line, named at the right edge. |
+| `CandleChartOptions` | `sealed record CandleChartOptions { ... }` | Layout and glyph options: `Mode` (Braille/Candles), `Width`, `Height`, `VolumeHeight`, `BucketSize`, `ReferenceLines`, and more. |
+| `Render` | `static string Render(IReadOnlyList<OhlcBar> bars, IReadOnlyList<ChartSession> sessions, CandleChartOptions? options = null)` | The full chart: price pane, optional volume pane, time/session/day axes. Every line is exactly `options.Width` characters. |
+
+### BrailleCanvas
+
+A sealed class in `MindAttic.Helpers.Ascii` (instance-based: it holds the dot grid being built).
+
+| Member | Signature | Description |
+| --- | --- | --- |
+| `DotWidth` / `DotHeight` | `int DotWidth { get; }` / `int DotHeight { get; }` | The canvas size in dots. |
+| `Columns` / `Rows` | `int Columns { get; }` / `int Rows { get; }` | The rendered size in characters: `ceil(DotWidth / 2)` and `ceil(DotHeight / 4)`. |
+| `BrailleCanvas` | `BrailleCanvas(int dotWidth, int dotHeight)` | Creates an empty canvas. Throws `ArgumentOutOfRangeException` for a non-positive width or height. |
+| `SetDot` | `void SetDot(int x, int y, bool on = true)` | Turns one dot on or off, in dot coordinates. Out of range is a silent no-op, never a throw. |
+| `DrawLine` | `void DrawLine(int x0, int y0, int x1, int y1)` | A straight line of dots (Bresenham), in dot coordinates. |
+| `DrawRect` | `void DrawRect(int x, int y, int width, int height, bool filled = false)` | A rectangle of dots; outline only unless `filled` is true. |
+| `RenderRows` | `string[] RenderRows()` | One string per output row (`Rows` strings, each `Columns` characters); an empty cell renders as a space. |
+| `Render` | `string Render()` | `RenderRows()` joined by `'\n'`. |
+
+### AsciiMockup
+
+A static class in `MindAttic.Helpers.Ascii`.
+
+| Member | Signature | Description |
+| --- | --- | --- |
+| `MockupPanel` | `readonly record struct MockupPanel(int X, int Y, int Width, int Height, string? Label = null)` | One labeled rectangular region, in character cells. |
+| `Render` | `static string Render(IReadOnlyList<MockupPanel> panels, int width, int height, string? title = null)` | A Braille-dot-resolution wireframe: each panel's border plus its centered label. Throws on an empty panel list or a panel that doesn't fit the canvas. |
+
 ## How it works
 
 ```text
@@ -220,7 +299,7 @@ PiHelper keeps the spigot's `q, r, t, k, n, l` state as `BigInteger`s and emits 
 
 ```powershell
 dotnet build    # library + tests + ascii-align tool (net10.0, TreatWarningsAsErrors, Nullable enabled)
-dotnet test     # 23 NUnit tests
+dotnet test     # 80 NUnit tests
 dotnet pack MindAttic.Helpers/MindAttic.Helpers.csproj -c Release   # produces the NuGet package
 ```
 
@@ -235,6 +314,10 @@ dotnet pack MindAttic.Helpers/MindAttic.Helpers.csproj -c Release   # produces t
 | `AbstractArtGeneratorTests` | 7 | Determinism, different seeds differ, well-formed SVG with a palette gradient, data URI round-trip, letter override and default, exactly 16 palettes. |
 | `PiHelperTests` | 9 | Zero and four places, 99 places against known pi, determinism, longer runs extend shorter ones, guard disabled, impossible threshold stops early, argument validation. |
 | `AsciiAlignerTests` | 7 | Short rows padded to the block's widest, a rule run extends instead of gapping, box-drawing characters, independent blank-line-separated blocks, already-aligned text is a no-op, trailing-newline presence preserved, unbordered text still right-padded. |
+| `AsciiChartTests` | 9 (6 passing, 3 pre-existing failures: M.HELP-T15/T16/T17/T19) | Default scaling, label right-align, explicit `scaleMax` headroom, a marker widening the implicit scale, marker overlay position, value formatting, equal line widths, empty-series and non-positive-width validation. |
+| `AsciiCandleChartTests` | 26 | Exact requested width in Braille and Candles modes, Candles mode is pure ASCII and bar-order independent, Braille mode uses only Braille/ASCII glyphs, Braille's 4x vertical resolution, session breaks line up in every pane row, auto-bucket picks the smallest fit, bucket aggregation, reference lines drawn and named, session/day labeling, rejects a chart that can't fit, nice-step rounding, compact-clock formatting. |
+| `BrailleCanvasTests` | 12 | A lone dot renders the exact Braille character, an empty canvas is all spaces, `RenderRows`/`Render` shape, out-of-range `SetDot` doesn't throw, `DrawRect` outline vs filled, `DrawLine` horizontal/vertical/diagonal, constructor validation. |
+| `AsciiMockupTests` | 10 | A single panel's border and centered label, multiple panels render independently, exact line width with and without a title, invalid panels/canvas throw. |
 
 ## Project layout
 
@@ -244,12 +327,20 @@ MindAttic.Helpers/
 │   ├── AbstractArtGenerator.cs
 │   ├── PiHelper.cs
 │   ├── Ascii/
-│   │   └── AsciiAligner.cs
+│   │   ├── AsciiAligner.cs
+│   │   ├── AsciiChart.cs
+│   │   ├── AsciiCandleChart.cs
+│   │   ├── BrailleCanvas.cs
+│   │   └── AsciiMockup.cs
 │   └── MindAttic.Helpers.csproj
 ├── MindAttic.Helpers.Tests/               NUnit test project (IsPackable=false)
 │   ├── AbstractArtGeneratorTests.cs       7 tests
 │   ├── PiHelperTests.cs                   9 tests
 │   ├── AsciiAlignerTests.cs               7 tests
+│   ├── AsciiChartTests.cs                 9 tests
+│   ├── AsciiCandleChartTests.cs           26 tests
+│   ├── BrailleCanvasTests.cs              12 tests
+│   ├── AsciiMockupTests.cs                10 tests
 │   └── MindAttic.Helpers.Tests.csproj
 ├── MindAttic.Helpers.Ascii.Tool/          ascii-align dotnet-tool console wrapper
 │   ├── Program.cs

@@ -4,7 +4,7 @@ project: MindAttic.Helpers
 code: M.HELP
 layer: bible
 status: living
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 # MindAttic.Helpers — Project Bible
@@ -89,6 +89,32 @@ static class with a stable, faithfully-ported behaviour.
   box/table block out to that block's widest line, so a hand-drawn diagram's right
   edge stops drifting. Faithful C# port of `MindAttic.Orchestrator/tools/ascii_align.py`
   (M.ORCH-T1305; that script is retired once this version ships).
+- **`Ascii.ChartPoint`** — `readonly record struct` (Label, Value): one labeled value
+  plotted by `AsciiChart.BarChart`.
+- **`Ascii.AsciiChart`** — renders a labeled series as an ASCII horizontal bar chart:
+  bars scaled to a max width, an optional target-line marker, formatted values.
+- **`Ascii.OhlcBar`** / **`Ascii.ChartSession`** / **`Ascii.ChartReferenceLine`** — the
+  inputs to `AsciiCandleChart`: one open/high/low/close/volume bar, a labeled
+  contiguous stretch of time (e.g. a premarket/regular/after-hours session), and a
+  horizontal reference line.
+- **`Ascii.AsciiCandleChart`** — renders OHLC bars as a text chart across labeled
+  sessions (M.HELP-T18): nice-step price axis, optional volume pane, time/session/day
+  axes, every line exactly `Width` characters. Braille mode (the default) packs 2 time
+  slots x 4 price levels per character via `Ascii.BrailleCanvas`; Candles mode is pure
+  ASCII.
+- **`Ascii.BrailleCanvas`** — a dot-addressable canvas (M.HELP-T20) that packs a
+  2-wide x 4-tall grid of dots into every character using Unicode Braille Patterns
+  (`U+2800` + dot bits): `SetDot`, `DrawLine` (Bresenham), `DrawRect` (outline or
+  filled), `RenderRows`/`Render`. Extracted from `AsciiCandleChart`'s former private
+  bit-packing so it and `AsciiMockup` share one implementation instead of two
+  (M.HELP-LAW-1/2); the dot→bit mapping is reused verbatim, so `AsciiCandleChart`'s
+  own output is unchanged (M.HELP-LAW-3).
+- **`Ascii.MockupPanel`** — `readonly record struct` (X, Y, Width, Height, Label): one
+  labeled rectangular region of a wireframe, in character cells.
+- **`Ascii.AsciiMockup`** — renders labeled panels as a Braille-dot-resolution app/UI
+  wireframe (M.HELP-T20) — 8x the edge detail of a plain box-drawing border — built
+  entirely on `Ascii.BrailleCanvas`. General-purpose: it draws panels/boxes/labels for
+  any app's screens, not any one app's layout.
 
 ### 4.3 Key services (VERBS)
 - `AbstractArtGenerator.Svg(seed, initial?)` — raw 300×300 SVG markup.
@@ -98,6 +124,15 @@ static class with a stable, faithfully-ported behaviour.
 - `Ascii.AsciiAligner.Align(text)` — the aligned text, one independently-padded block
   per blank-line-separated group.
 - `Ascii.AsciiAligner.IsAligned(text)` — `true` when `Align(text) == text`.
+- `Ascii.AsciiChart.BarChart(points, maxBarWidth, scaleMax?, fillChar, markerValue?, markerChar, valueFormat?)` —
+  one bar per line: right-aligned label, a scaled bar, the formatted value.
+- `Ascii.AsciiCandleChart.Render(bars, sessions, options?)` — the full OHLC chart
+  across labeled sessions.
+- `Ascii.BrailleCanvas.SetDot(x, y, on = true)` / `.DrawLine(x0, y0, x1, y1)` /
+  `.DrawRect(x, y, width, height, filled = false)` / `.RenderRows()` / `.Render()` —
+  build and render a Braille-dot canvas.
+- `Ascii.AsciiMockup.Render(panels, width, height, title?)` — a wireframe of labeled
+  panel outlines and centered labels, exactly `width` characters per line.
 
 ## 5. The Laws {#M.HELP-§5}
 This project **inherits the org-wide House Rules** verbatim — see
@@ -134,9 +169,12 @@ correctness), output shape, and edge/error cases. A behaviour is `✅` in
 [USER_STORIES](USER_STORIES.md) only when a named test proves it.
 
 ## 6. Verified state {#M.HELP-§6}
-Evidence re-confirmed **2026-10-30** on `net10.0` (Windows):
+Evidence re-confirmed **2026-10-31** on `net10.0` (Windows):
 - ✅ **Build**: `dotnet build` → Build succeeded. 0 Warning(s), 0 Error(s).
-- ✅ **Tests**: `dotnet test MindAttic.Helpers.slnx` → **23 passed, 0 failed, 0 skipped**.
+- ⚠️ **Tests**: `dotnet test MindAttic.Helpers.slnx` → **77 passed, 3 failed, 0 skipped** (80 total).
+  The 3 failures are pre-existing `AsciiChartTests` BarChart regressions (M.HELP-T15,
+  M.HELP-T16, M.HELP-T17; tracked together by M.HELP-T19) — unrelated to, and
+  unchanged by, the M.HELP-T20 extraction below.
   - `AbstractArtGeneratorTests` — 7 tests (determinism, distinctness, well-formed
     SVG, data-URI round-trip, initial override + default, 16-palette shape).
   - `PiHelperTests` — 9 tests (bare 3, 3.1415, 99-place reference match, determinism,
@@ -146,11 +184,32 @@ Evidence re-confirmed **2026-10-30** on `net10.0` (Windows):
     existing rule run instead of inserting a gap, box-drawing characters, independent
     blank-line-separated blocks, already-aligned text is a no-op, trailing-newline
     presence preserved, plain unbordered text still gets right-padded).
+  - `AsciiChartTests` — 9 tests, **6 passing / 3 failing** (passing: default scaling,
+    an explicit marker widens the scale, value-format applied, every line the same
+    width, empty-series and non-positive-width validation; failing — M.HELP-T15/T16/
+    T17/T19: label right-align, marker overlay position, explicit-scaleMax headroom).
+  - `AsciiCandleChartTests` — 26 tests (exact requested width in both modes, Candles
+    mode is pure ASCII and order-independent, Braille mode uses only Braille/ASCII
+    glyphs, Braille's 4x vertical resolution, session breaks line up in every pane row,
+    auto-bucket picks the smallest fit, bucket aggregation, reference lines drawn and
+    named, session/day labeling, rejects a chart that can't fit, nice-step rounding,
+    compact-clock formatting).
+  - `BrailleCanvasTests` — 12 tests (a lone dot renders the exact Braille character per
+    the documented bit mapping, an empty canvas is all spaces, `RenderRows` shape
+    matches `Columns`/`Rows`, `Render` joins with newlines, out-of-range `SetDot`
+    doesn't throw, `DrawRect` outline vs filled, `DrawLine` horizontal/vertical/
+    diagonal, constructor rejects non-positive dot width/height).
+  - `AsciiMockupTests` — 10 tests (a single panel renders a border and centered label,
+    multiple panels render independently, every line is exactly the requested width
+    with and without a title, empty panel list / out-of-bounds panel / negative origin
+    / non-positive canvas or panel size all throw).
 - ✅ **CLI wrapper**: `ascii-align --check` / default / `--write` smoke-tested against a
   deliberately misaligned file — exits 1 under `--check`, prints the fixed diagram by
   default, and `--write` then `--check` round-trips to exit 0.
 - Proven helpers: [`AbstractArtGenerator`](#M.HELP-§4), [`PiHelper`](#M.HELP-§4),
-  [`Ascii.AsciiAligner`](#M.HELP-§4).
+  [`Ascii.AsciiAligner`](#M.HELP-§4), [`Ascii.AsciiCandleChart`](#M.HELP-§4),
+  [`Ascii.BrailleCanvas`](#M.HELP-§4), [`Ascii.AsciiMockup`](#M.HELP-§4). `Ascii.AsciiChart`
+  is proven except the 3 BarChart regressions above (M.HELP-T15/T16/T17/T19).
 - See [USER_STORIES.md](USER_STORIES.md) for per-capability test citations.
 
 ## 7. Active frontier {#M.HELP-§7}

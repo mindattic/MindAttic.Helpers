@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>MindAttic.Helpers</title>
-<meta name="description" content="Dependency-free .NET 10 helpers: a deterministic art generator that turns any string into a stable SVG avatar, a streaming pi digit generator that stops before it runs out of memory, and an ASCII diagram aligner so a ...">
+<meta name="description" content="Dependency-free .NET 10 helpers: a deterministic art generator that turns any string into a stable SVG avatar, a streaming pi digit generator that stops before it runs out of memory, an ASCII diagram aligner so a box'...">
 <meta name="generator" content="MindAttic Codex build-readme.ps1">
-<meta name="generated" content="2026-10-30">
+<meta name="generated" content="2026-10-31">
 <style>:root{
   --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;
   --border:#30363d;
@@ -111,8 +111,8 @@ pre:hover .cpbtn{opacity:1}
   </nav>
   <main id="content">
 <h1 id="mindattichelpers">MindAttic.Helpers</h1>
-<p>Dependency-free .NET 10 helpers: a deterministic art generator that turns any string into a stable SVG avatar, a streaming pi digit generator that stops before it runs out of memory, and an ASCII diagram aligner so a box's right-hand border never drifts.</p>
-<p><a href="MindAttic.Helpers/MindAttic.Helpers.csproj"><img src="https://img.shields.io/badge/.NET-10.0-512BD4" alt=".NET"></a> <a href="MindAttic.Helpers"><img src="https://img.shields.io/badge/language-C%23-239120" alt="C#"></a> <a href="MindAttic.Helpers/MindAttic.Helpers.csproj"><img src="https://img.shields.io/badge/dependencies-BCL%20only-blue" alt="Dependencies"></a> <a href="MindAttic.Helpers.Tests"><img src="https://img.shields.io/badge/tests-23%20NUnit-brightgreen" alt="Tests"></a> <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a></p>
+<p>Dependency-free .NET 10 helpers: a deterministic art generator that turns any string into a stable SVG avatar, a streaming pi digit generator that stops before it runs out of memory, an ASCII diagram aligner so a box's right-hand border never drifts, and a family of ASCII/Braille renderers (bar charts, OHLC candle charts, and Braille-dot-resolution app-mockup wireframes) sharing one dot-packing canvas.</p>
+<p><a href="MindAttic.Helpers/MindAttic.Helpers.csproj"><img src="https://img.shields.io/badge/.NET-10.0-512BD4" alt=".NET"></a> <a href="MindAttic.Helpers"><img src="https://img.shields.io/badge/language-C%23-239120" alt="C#"></a> <a href="MindAttic.Helpers/MindAttic.Helpers.csproj"><img src="https://img.shields.io/badge/dependencies-BCL%20only-blue" alt="Dependencies"></a> <a href="MindAttic.Helpers.Tests"><img src="https://img.shields.io/badge/tests-80%20NUnit-brightgreen" alt="Tests"></a> <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a></p>
 <pre><code class="language-csharp">using MindAttic.Helpers;
 using MindAttic.Helpers.Ascii;
 
@@ -164,13 +164,32 @@ ascii-align --write diagram.txt   # fix it in place</code></pre>
 <li>Ships with <code>MindAttic.Helpers.Ascii.Tool</code>, a <code>dotnet tool</code> console wrapper (<code>ascii-align</code>) so any shell can validate (<code>--check</code>) or fix (<code>--write</code>) a diagram file without writing C#.</li>
 <li>Faithful port of <code>MindAttic.Orchestrator/tools/ascii_align.py</code> (M.ORCH-T1305), which is retired now that this is the canonical, cross-repo version.</li>
 </ul>
+<h3 id="asciicandlechart-mindattichelpersascii">AsciiCandleChart (<code>MindAttic.Helpers.Ascii</code>)</h3>
+<ul>
+<li>Draws OHLC bars as a text chart across labeled sessions (e.g. premarket / regular / after-hours per day); the time between sessions isn't drawn, so an overnight gap costs one separator column.</li>
+<li><strong>Braille mode</strong> (the default) packs 2 time slots x 4 price levels into every character (<code>⣿</code>), 8x the detail of one-glyph-per-cell ASCII, via <code>BrailleCanvas</code>; volume uses eighth-height blocks (<code>▁▂▃▄▅▆▇█</code>). <strong>Candles mode</strong> is pure ASCII (<code>|</code> wick, <code>#</code> up, <code>=</code> down).</li>
+<li>Nice-step price axis, reference lines named at the right edge (<code>&lt;- Thu close 24.31</code>), a <code>last</code> marker, time ticks, session names and day spans; the bucket size is picked automatically to fit the width.</li>
+<li>Every output line is exactly <code>Width</code> characters, so the chart never drifts; deterministic and culture-invariant.</li>
+</ul>
+<h3 id="braillecanvas-mindattichelpersascii">BrailleCanvas (<code>MindAttic.Helpers.Ascii</code>)</h3>
+<ul>
+<li>A dot-addressable canvas that packs a 2-wide x 4-tall grid of dots into every character using Unicode Braille Patterns (<code>U+2800</code> + dot bits) — 8x the resolution of one glyph per cell, while every line still stays single-width and lines up.</li>
+<li><code>SetDot</code>, <code>DrawLine</code> (Bresenham), and <code>DrawRect</code> (outline or filled) build up the dot grid; <code>RenderRows()</code>/<code>Render()</code> emit the text. Out-of-range dots are silently ignored rather than throwing, since chart/mockup code routinely draws right to the edge.</li>
+<li>The shared primitive behind <code>AsciiCandleChart</code>'s Braille mode and <code>AsciiMockup</code>, extracted so both use one dot-packing implementation instead of two.</li>
+</ul>
+<h3 id="asciimockup-mindattichelpersascii">AsciiMockup (<code>MindAttic.Helpers.Ascii</code>)</h3>
+<ul>
+<li>Renders labeled rectangular panels — an app/UI wireframe — as Braille-dot-resolution box outlines, built entirely on <code>BrailleCanvas</code>.</li>
+<li>Each panel's label is centered just inside its top border; every output line is exactly the requested width.</li>
+<li>General-purpose: it draws panels/boxes/labels for any app's screens, not any one app's layout.</li>
+</ul>
 <h2 id="quick-start">Quick start</h2>
 <p>Prerequisites: the .NET 10 SDK.</p>
 <pre><code class="language-powershell">git clone https://github.com/mindattic/MindAttic.Helpers.git
 cd MindAttic.Helpers
 dotnet build
 dotnet test</code></pre>
-<p>You should see the 23 NUnit tests pass. To use the library from another project, add a project reference (the package is configured for NuGet but not yet published):</p>
+<p>You should see the 80 NUnit tests pass (3 pre-existing <code>AsciiChartTests</code> BarChart failures — M.HELP-T15/T16/T17/T19 — are tracked separately and unrelated to the rest of the suite). To use the library from another project, add a project reference (the package is configured for NuGet but not yet published):</p>
 <pre><code class="language-xml">&lt;ItemGroup&gt;
   &lt;ProjectReference Include="..\MindAttic.Helpers\MindAttic.Helpers\MindAttic.Helpers.csproj" /&gt;
 &lt;/ItemGroup&gt;</code></pre>
@@ -215,6 +234,20 @@ Console.WriteLine(AsciiAligner.Align(text));
 
 AsciiAligner.IsAligned(text);          // false
 AsciiAligner.IsAligned(AsciiAligner.Align(text));   // true</code></pre>
+<h3 id="sketching-a-wireframe">Sketching a wireframe</h3>
+<pre><code class="language-csharp">using MindAttic.Helpers.Ascii;
+
+var panels = new[]
+{
+    new MockupPanel(0, 0, 40, 10, "Sidebar"),
+    new MockupPanel(40, 0, 40, 10, "Main"),
+};
+Console.WriteLine(AsciiMockup.Render(panels, width: 80, height: 10, title: "Dashboard"));</code></pre>
+<p><code>AsciiMockup</code> is built entirely on <code>BrailleCanvas</code>, which you can also draw on directly:</p>
+<pre><code class="language-csharp">var canvas = new BrailleCanvas(dotWidth: 20, dotHeight: 8);
+canvas.DrawRect(0, 0, 20, 8);
+canvas.DrawLine(0, 0, 19, 7);
+Console.WriteLine(canvas.Render());</code></pre>
 <h2 id="api">API</h2>
 <h3 id="abstractartgenerator">AbstractArtGenerator</h3>
 <p>A static class in <code>MindAttic.Helpers</code>.</p>
@@ -281,6 +314,124 @@ AsciiAligner.IsAligned(AsciiAligner.Align(text));   // true</code></pre>
 </tr>
 </tbody></table>
 <p>The <code>ascii-align</code> console wrapper (<code>MindAttic.Helpers.Ascii.Tool</code>) exposes the same behaviour as a CLI: <code>ascii-align [path]</code> (stdin if omitted), <code>--check</code> (exit 1 if misaligned), <code>--write</code> (rewrite the file in place).</p>
+<h3 id="asciichart">AsciiChart</h3>
+<p>A static class in <code>MindAttic.Helpers.Ascii</code>.</p>
+<table><thead><tr>
+<th>Member</th>
+<th>Signature</th>
+<th>Description</th>
+</tr></thead><tbody>
+<tr>
+<td><code>ChartPoint</code></td>
+<td><code>readonly record struct ChartPoint(string Label, double Value)</code></td>
+<td>One labeled value to plot as a bar.</td>
+</tr>
+<tr>
+<td><code>BarChart</code></td>
+<td>`static string BarChart(IReadOnlyList&lt;ChartPoint&gt; points, int maxBarWidth = 40, double? scaleMax = null, char fillChar = '#', double? markerValue = null, char markerChar = '\</td>
+<td>', string? valueFormat = null)`</td>
+<td>One bar per line: a right-aligned label, a bar scaled to <code>maxBarWidth</code>, and the formatted value. Throws on an empty series or a non-positive <code>maxBarWidth</code>.</td>
+</tr>
+</tbody></table>
+<h3 id="asciicandlechart">AsciiCandleChart</h3>
+<p>A static class in <code>MindAttic.Helpers.Ascii</code>.</p>
+<table><thead><tr>
+<th>Member</th>
+<th>Signature</th>
+<th>Description</th>
+</tr></thead><tbody>
+<tr>
+<td><code>OhlcBar</code></td>
+<td><code>readonly record struct OhlcBar(DateTime Time, double Open, double High, double Low, double Close, double Volume = 0)</code></td>
+<td>One open/high/low/close/volume bar.</td>
+</tr>
+<tr>
+<td><code>ChartSession</code></td>
+<td><code>sealed record ChartSession(string Label, DateTime Start, DateTime End, string Group = "")</code></td>
+<td>A labeled, contiguous stretch of time drawn as one block of columns.</td>
+</tr>
+<tr>
+<td><code>ChartReferenceLine</code></td>
+<td><code>sealed record ChartReferenceLine(string Label, double Value, char LineChar = '-')</code></td>
+<td>A horizontal reference line, named at the right edge.</td>
+</tr>
+<tr>
+<td><code>CandleChartOptions</code></td>
+<td><code>sealed record CandleChartOptions { ... }</code></td>
+<td>Layout and glyph options: <code>Mode</code> (Braille/Candles), <code>Width</code>, <code>Height</code>, <code>VolumeHeight</code>, <code>BucketSize</code>, <code>ReferenceLines</code>, and more.</td>
+</tr>
+<tr>
+<td><code>Render</code></td>
+<td><code>static string Render(IReadOnlyList&lt;OhlcBar&gt; bars, IReadOnlyList&lt;ChartSession&gt; sessions, CandleChartOptions? options = null)</code></td>
+<td>The full chart: price pane, optional volume pane, time/session/day axes. Every line is exactly <code>options.Width</code> characters.</td>
+</tr>
+</tbody></table>
+<h3 id="braillecanvas">BrailleCanvas</h3>
+<p>A sealed class in <code>MindAttic.Helpers.Ascii</code> (instance-based: it holds the dot grid being built).</p>
+<table><thead><tr>
+<th>Member</th>
+<th>Signature</th>
+<th>Description</th>
+</tr></thead><tbody>
+<tr>
+<td><code>DotWidth</code> / <code>DotHeight</code></td>
+<td><code>int DotWidth { get; }</code> / <code>int DotHeight { get; }</code></td>
+<td>The canvas size in dots.</td>
+</tr>
+<tr>
+<td><code>Columns</code> / <code>Rows</code></td>
+<td><code>int Columns { get; }</code> / <code>int Rows { get; }</code></td>
+<td>The rendered size in characters: <code>ceil(DotWidth / 2)</code> and <code>ceil(DotHeight / 4)</code>.</td>
+</tr>
+<tr>
+<td><code>BrailleCanvas</code></td>
+<td><code>BrailleCanvas(int dotWidth, int dotHeight)</code></td>
+<td>Creates an empty canvas. Throws <code>ArgumentOutOfRangeException</code> for a non-positive width or height.</td>
+</tr>
+<tr>
+<td><code>SetDot</code></td>
+<td><code>void SetDot(int x, int y, bool on = true)</code></td>
+<td>Turns one dot on or off, in dot coordinates. Out of range is a silent no-op, never a throw.</td>
+</tr>
+<tr>
+<td><code>DrawLine</code></td>
+<td><code>void DrawLine(int x0, int y0, int x1, int y1)</code></td>
+<td>A straight line of dots (Bresenham), in dot coordinates.</td>
+</tr>
+<tr>
+<td><code>DrawRect</code></td>
+<td><code>void DrawRect(int x, int y, int width, int height, bool filled = false)</code></td>
+<td>A rectangle of dots; outline only unless <code>filled</code> is true.</td>
+</tr>
+<tr>
+<td><code>RenderRows</code></td>
+<td><code>string[] RenderRows()</code></td>
+<td>One string per output row (<code>Rows</code> strings, each <code>Columns</code> characters); an empty cell renders as a space.</td>
+</tr>
+<tr>
+<td><code>Render</code></td>
+<td><code>string Render()</code></td>
+<td><code>RenderRows()</code> joined by <code>'\n'</code>.</td>
+</tr>
+</tbody></table>
+<h3 id="asciimockup">AsciiMockup</h3>
+<p>A static class in <code>MindAttic.Helpers.Ascii</code>.</p>
+<table><thead><tr>
+<th>Member</th>
+<th>Signature</th>
+<th>Description</th>
+</tr></thead><tbody>
+<tr>
+<td><code>MockupPanel</code></td>
+<td><code>readonly record struct MockupPanel(int X, int Y, int Width, int Height, string? Label = null)</code></td>
+<td>One labeled rectangular region, in character cells.</td>
+</tr>
+<tr>
+<td><code>Render</code></td>
+<td><code>static string Render(IReadOnlyList&lt;MockupPanel&gt; panels, int width, int height, string? title = null)</code></td>
+<td>A Braille-dot-resolution wireframe: each panel's border plus its centered label. Throws on an empty panel list or a panel that doesn't fit the canvas.</td>
+</tr>
+</tbody></table>
 <h2 id="how-it-works">How it works</h2>
 <pre><code class="language-text">AbstractArtGenerator.Svg("persona-0042")
 
@@ -296,7 +447,7 @@ AsciiAligner.IsAligned(AsciiAligner.Align(text));   // true</code></pre>
 <p><code>AsciiAligner.Align</code> splits the input on blank lines into independent blocks, finds each block's widest (right-trimmed) line, then pads every other line out to that width: a line ending in a rule/fill character (<code>-=_.~</code> or box-drawing dashes) gets that character repeated, anything else gets spaces inserted just before its own trailing wall character (<code>|</code>, <code>+</code>, a box-drawing corner, <code>&gt;</code>). No parsing of box structure happens — it's a per-line text operation, so it has no notion of nested boxes or column alignment within a row, only overall line width per block.</p>
 <h2 id="building">Building</h2>
 <pre><code class="language-powershell">dotnet build    # library + tests + ascii-align tool (net10.0, TreatWarningsAsErrors, Nullable enabled)
-dotnet test     # 23 NUnit tests
+dotnet test     # 80 NUnit tests
 dotnet pack MindAttic.Helpers/MindAttic.Helpers.csproj -c Release   # produces the NuGet package</code></pre>
 <ul>
 <li>Target framework: <code>net10.0</code>. Shared compiler settings live in <code>Directory.Build.props</code>: latest language version, nullable enabled, warnings as errors with <code>CS1591</code> excluded.</li>
@@ -324,6 +475,26 @@ dotnet pack MindAttic.Helpers/MindAttic.Helpers.csproj -c Release   # produces t
 <td>7</td>
 <td>Short rows padded to the block's widest, a rule run extends instead of gapping, box-drawing characters, independent blank-line-separated blocks, already-aligned text is a no-op, trailing-newline presence preserved, unbordered text still right-padded.</td>
 </tr>
+<tr>
+<td><code>AsciiChartTests</code></td>
+<td>9 (6 passing, 3 pre-existing failures: M.HELP-T15/T16/T17/T19)</td>
+<td>Default scaling, label right-align, explicit <code>scaleMax</code> headroom, a marker widening the implicit scale, marker overlay position, value formatting, equal line widths, empty-series and non-positive-width validation.</td>
+</tr>
+<tr>
+<td><code>AsciiCandleChartTests</code></td>
+<td>26</td>
+<td>Exact requested width in Braille and Candles modes, Candles mode is pure ASCII and bar-order independent, Braille mode uses only Braille/ASCII glyphs, Braille's 4x vertical resolution, session breaks line up in every pane row, auto-bucket picks the smallest fit, bucket aggregation, reference lines drawn and named, session/day labeling, rejects a chart that can't fit, nice-step rounding, compact-clock formatting.</td>
+</tr>
+<tr>
+<td><code>BrailleCanvasTests</code></td>
+<td>12</td>
+<td>A lone dot renders the exact Braille character, an empty canvas is all spaces, <code>RenderRows</code>/<code>Render</code> shape, out-of-range <code>SetDot</code> doesn't throw, <code>DrawRect</code> outline vs filled, <code>DrawLine</code> horizontal/vertical/diagonal, constructor validation.</td>
+</tr>
+<tr>
+<td><code>AsciiMockupTests</code></td>
+<td>10</td>
+<td>A single panel's border and centered label, multiple panels render independently, exact line width with and without a title, invalid panels/canvas throw.</td>
+</tr>
 </tbody></table>
 <h2 id="project-layout">Project layout</h2>
 <pre><code class="language-text">MindAttic.Helpers/
@@ -331,12 +502,20 @@ dotnet pack MindAttic.Helpers/MindAttic.Helpers.csproj -c Release   # produces t
 │   ├── AbstractArtGenerator.cs
 │   ├── PiHelper.cs
 │   ├── Ascii/
-│   │   └── AsciiAligner.cs
+│   │   ├── AsciiAligner.cs
+│   │   ├── AsciiChart.cs
+│   │   ├── AsciiCandleChart.cs
+│   │   ├── BrailleCanvas.cs
+│   │   └── AsciiMockup.cs
 │   └── MindAttic.Helpers.csproj
 ├── MindAttic.Helpers.Tests/               NUnit test project (IsPackable=false)
 │   ├── AbstractArtGeneratorTests.cs       7 tests
 │   ├── PiHelperTests.cs                   9 tests
 │   ├── AsciiAlignerTests.cs               7 tests
+│   ├── AsciiChartTests.cs                 9 tests
+│   ├── AsciiCandleChartTests.cs           26 tests
+│   ├── BrailleCanvasTests.cs              12 tests
+│   ├── AsciiMockupTests.cs                10 tests
 │   └── MindAttic.Helpers.Tests.csproj
 ├── MindAttic.Helpers.Ascii.Tool/          ascii-align dotnet-tool console wrapper
 │   ├── Program.cs
@@ -382,7 +561,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools\build-readme.ps1   # r
 <p>MIT. See <a href="LICENSE">LICENSE</a>.</p>
 <p>Part of <a href="https://mindattic.com">MindAttic</a> — see more projects at <a href="https://github.com/mindattic">github.com/mindattic</a>. Related: <a href="https://github.com/mindattic/MindAttic.Legion">MindAttic.Legion</a>, <a href="https://github.com/mindattic/MindAttic.Vault">MindAttic.Vault</a>.</p>
 
-    <p class="codex-footer">Generated 2026-10-30 by the shared MindAttic Codex engine (<code>codex-standard/build-readme.ps1</code>) from <code>README.md</code>. Edit the Markdown source, not this file.</p>
+    <p class="codex-footer">Generated 2026-10-31 by the shared MindAttic Codex engine (<code>codex-standard/build-readme.ps1</code>) from <code>README.md</code>. Edit the Markdown source, not this file.</p>
   </main>
 </div>
 <script>(function(){
