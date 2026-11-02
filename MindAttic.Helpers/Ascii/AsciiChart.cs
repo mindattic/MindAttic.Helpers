@@ -86,7 +86,7 @@ public static class AsciiChart
         char markerChar)
     {
         double fraction = Math.Clamp(value / max, 0, 1);
-        int filled = (int)Math.Round(fraction * maxBarWidth);
+        int filled = (int)Math.Round(fraction * maxBarWidth, MidpointRounding.AwayFromZero);
 
         char[] bar = new char[maxBarWidth];
         for (int i = 0; i < maxBarWidth; i++)
@@ -97,7 +97,7 @@ public static class AsciiChart
         if (markerValue.HasValue)
         {
             double markerFraction = Math.Clamp(markerValue.Value / max, 0, 1);
-            int markerPos = (int)Math.Round(markerFraction * maxBarWidth);
+            int markerPos = (int)Math.Round(markerFraction * maxBarWidth, MidpointRounding.AwayFromZero);
             if (markerPos >= maxBarWidth)
             {
                 markerPos = maxBarWidth - 1;
