@@ -237,7 +237,7 @@ A static class in `MindAttic.Helpers.Ascii`.
 | Member | Signature | Description |
 | --- | --- | --- |
 | `ChartPoint` | `readonly record struct ChartPoint(string Label, double Value)` | One labeled value to plot as a bar. |
-| `BarChart` | `static string BarChart(IReadOnlyList<ChartPoint> points, int maxBarWidth = 40, double? scaleMax = null, char fillChar = '#', double? markerValue = null, char markerChar = '\|', string? valueFormat = null)` | One bar per line: a right-aligned label, a bar scaled to `maxBarWidth`, and the formatted value. Throws on an empty series or a non-positive `maxBarWidth`. |
+| `BarChart` | `static string BarChart(IReadOnlyList<ChartPoint> points, int maxBarWidth = 40, double? scaleMax = null, char fillChar = '#', double? markerValue = null, char markerChar = '\|', string? valueFormat = null)` | One bar per line: a right-aligned label, a bar scaled to `maxBarWidth`, and the formatted value (always invariant culture: `"0%"` gives `50%`, `"P0"` gives `50 %`). Throws on an empty series or a non-positive `maxBarWidth`. |
 
 ### AsciiCandleChart
 

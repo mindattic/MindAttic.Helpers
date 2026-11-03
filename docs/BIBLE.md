@@ -125,7 +125,8 @@ static class with a stable, faithfully-ported behaviour.
   per blank-line-separated group.
 - `Ascii.AsciiAligner.IsAligned(text)` — `true` when `Align(text) == text`.
 - `Ascii.AsciiChart.BarChart(points, maxBarWidth, scaleMax?, fillChar, markerValue?, markerChar, valueFormat?)` —
-  one bar per line: right-aligned label, a scaled bar, the formatted value.
+  one bar per line: right-aligned label, a scaled bar, the formatted value (invariant culture,
+  M.HELP-LAW-2; invariant "P0" is "50 %", custom "0%" is "50%").
 - `Ascii.AsciiCandleChart.Render(bars, sessions, options?)` — the full OHLC chart
   across labeled sessions.
 - `Ascii.BrailleCanvas.SetDot(x, y, on = true)` / `.DrawLine(x0, y0, x1, y1)` /

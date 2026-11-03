@@ -30,8 +30,10 @@ public static class AsciiChart
     /// </param>
     /// <param name="markerChar">The character used to draw <paramref name="markerValue"/>.</param>
     /// <param name="valueFormat">
-    /// A standard numeric format string (e.g. "0", "0.0", "P0") applied to each value; null uses
-    /// <see cref="double.ToString()"/>.
+    /// A numeric format string (e.g. "0", "0.0", "0%") applied to each value; null uses the
+    /// round-trip default. Values are always formatted with the invariant culture, so the chart is
+    /// identical on every machine (M.HELP-LAW-2): "0.0" gives "1.5", never "1,5". Note that the
+    /// invariant "P0" renders 0.5 as "50 %" (with a space); use the custom "0%" for "50%".
     /// </param>
     public static string BarChart(
         IReadOnlyList<ChartPoint> points,
@@ -70,7 +72,9 @@ public static class AsciiChart
         {
             string label = point.Label.PadLeft(labelWidth);
             string bar = RenderBar(point.Value, max, maxBarWidth, fillChar, markerValue, markerChar);
-            string value = valueFormat is not null ? point.Value.ToString(valueFormat) : point.Value.ToString();
+            string value = valueFormat is not null
+                ? point.Value.ToString(valueFormat, System.Globalization.CultureInfo.InvariantCulture)
+                : point.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
             lines.Add($"{label} | {bar} {value}");
         }
 
