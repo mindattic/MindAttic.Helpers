@@ -96,11 +96,14 @@ public static class AsciiAligner
     /// <summary>Extends <paramref name="line"/> (already known to be no wider than <paramref name="width"/>) out to <paramref name="width"/>.</summary>
     private static string PadLine(string line, int width)
     {
+        // Keep a CRLF line's '\r' (Align splits on '\n' only), so CRLF text round-trips instead of
+        // coming back with mixed endings and never passing IsAligned.
+        string lineEnd = line.EndsWith('\r') ? "\r" : "";
         string body = line.TrimEnd('\r', '\n');
         string stripped = body.TrimEnd();
         if (stripped.Length >= width)
         {
-            return body;
+            return body + lineEnd;
         }
 
         int need = width - stripped.Length;
@@ -120,6 +123,6 @@ public static class AsciiAligner
             stripped += new string(' ', need);
         }
 
-        return stripped + trailing;
+        return stripped + trailing + lineEnd;
     }
 }

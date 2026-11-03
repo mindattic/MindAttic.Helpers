@@ -85,7 +85,10 @@ public static class PiHelper
         // Gibbons' unbounded spigot state.
         BigInteger q = 1, r = 0, t = 1, k = 1, n = 3, l = 3;
 
-        var sb = new StringBuilder(decimalPlaces + 2);
+        // Cap the up-front capacity: decimalPlaces + 2 overflows at int.MaxValue (a spurious
+        // "capacity" throw), and pre-allocating a huge request would grab the memory the guard
+        // exists to protect before a single digit is checked. The builder grows as needed.
+        var sb = new StringBuilder(Math.Min(decimalPlaces, 1 << 16) + 2);
         var fractional = 0;       // digits emitted after the decimal point
         var emittedInteger = false;
         var stopped = false;

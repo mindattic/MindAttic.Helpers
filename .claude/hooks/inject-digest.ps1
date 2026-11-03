@@ -10,7 +10,9 @@ $digestPath = Join-Path $repoRoot 'docs\BIBLE.digest.md'
 
 if (-not (Test-Path $digestPath)) { Write-Output '{}'; return }
 
-$digest = Get-Content -Raw -Path $digestPath
+# The digest is written as BOM-less UTF-8 (tools/codex.ps1); PS 5.1's Get-Content would read it
+# as ANSI and inject mojibake (every em dash turns into three garbage chars), so read it explicitly as UTF-8.
+$digest = [System.IO.File]::ReadAllText($digestPath, [System.Text.Encoding]::UTF8)
 if ([string]::IsNullOrWhiteSpace($digest)) { Write-Output '{}'; return }
 
 $preamble = @"

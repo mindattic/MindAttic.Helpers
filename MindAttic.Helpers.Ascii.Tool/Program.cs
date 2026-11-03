@@ -1,3 +1,4 @@
+using System.Text;
 using MindAttic.Helpers.Ascii;
 
 namespace MindAttic.Helpers.Ascii.Tool;
@@ -53,7 +54,28 @@ public static class Program
             return 2;
         }
 
-        string text = path is not null ? File.ReadAllText(path) : Console.In.ReadToEnd();
+        // Redirected stdin/stdout use the OEM code page on Windows, which mangles box-drawing
+        // characters (one '─' decodes as several chars, so widths are miscounted). Piped text is
+        // read and written as UTF-8 instead; an interactive console keeps its own encoding.
+        var utf8 = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+        bool fileHadBom = false;
+        string text;
+        if (path is not null)
+        {
+            byte[] bytes = File.ReadAllBytes(path);
+            fileHadBom = bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF;
+            text = File.ReadAllText(path);
+        }
+        else if (Console.IsInputRedirected)
+        {
+            using var stdin = new StreamReader(Console.OpenStandardInput(), utf8);
+            text = stdin.ReadToEnd();
+        }
+        else
+        {
+            text = Console.In.ReadToEnd();
+        }
+
         string aligned = AsciiAligner.Align(text);
 
         if (check)
@@ -71,13 +93,23 @@ public static class Program
         {
             if (aligned != text)
             {
-                File.WriteAllText(path!, aligned);
+                // Keep the file's UTF-8 BOM (or lack of one) instead of silently stripping it.
+                File.WriteAllText(path!, aligned, new UTF8Encoding(encoderShouldEmitUTF8Identifier: fileHadBom));
             }
 
             return 0;
         }
 
-        Console.Out.Write(aligned);
+        if (Console.IsOutputRedirected)
+        {
+            using var stdout = new StreamWriter(Console.OpenStandardOutput(), utf8);
+            stdout.Write(aligned);
+        }
+        else
+        {
+            Console.Out.Write(aligned);
+        }
+
         return 0;
     }
 
