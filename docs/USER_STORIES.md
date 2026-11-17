@@ -107,7 +107,7 @@ Helper: [`PiHelper`](BIBLE.md#M.HELP-§4).
 | M.HELP-T7 | 2026-10-16 | docs | open | Bring README.md up to date with the code as it is now (what it is, setup, usage, commands, current state), following codex-standard/README-STYLE.md; README.htm regenerated if the repo has one | user request 2026-10-16: approved repo sweep |
 | M.HELP-T8 | 2026-10-16 | docs | closed | Update USER_STORIES.md | — |
 | M.HELP-T9 | 2026-10-19 | chore | wont-do | Convert tracked source files to LF line endings via .gitattributes, per HOUSE-LAW-13 (low priority) | — |
-| M.HELP-T10 | 2026-10-20 | docs | open | Publish MindAttic.Helpers docs to GitHub Pages via the shared Agency DocFX pipeline: run adopt-docs-site.ps1 (README.md as home page, docs/*.md as articles, API reference only where the code builds in CI), enable Pages with build_type=workflow, set the repo homepage URL, retire tools/build-readme.ps1 and README.htm, confirm the docs Actions run is green and https://mindattic.github.io/MindAttic.Helpers/ returns 200. Depends on MAT-T8. | — |
+| M.HELP-T10 | 2026-10-20 | docs | closed | Publish MindAttic.Helpers docs to GitHub Pages via the shared Agency DocFX pipeline: run adopt-docs-site.ps1 (README.md as home page, docs/*.md as articles, API reference only where the code builds in CI), enable Pages with build_type=workflow, set the repo homepage URL, retire tools/build-readme.ps1 and README.htm, confirm the docs Actions run is green and https://mindattic.github.io/MindAttic.Helpers/ returns 200. Depends on MAT-T8. | — |
 | M.HELP-T11 | 2026-10-22 | docs | closed | Update USER_STORIES.md | — |
 | M.HELP-T12 | 2026-10-24 | docs | closed | Update USER_STORIES.md | — |
 | M.HELP-T13 | 2026-10-30 | feature | closed | AsciiAligner: port ascii_align.py into MindAttic.Helpers.Ascii as a dependency-free C# library + dotnet-tool CLI wrapper | 4ee92ad |
@@ -118,8 +118,10 @@ Helper: [`PiHelper`](BIBLE.md#M.HELP-§4).
 | M.HELP-T18 | 2026-10-30 | feature | closed | AsciiCandleChart: aligned ASCII OHLC candle chart over labeled time sessions, with compressed gaps, volume pane, reference lines and time/session/day axes | — |
 | M.HELP-T19 | 2026-10-30 | fix | open | AsciiChartTests: 3 BarChart tests fail (label right-align, marker overlay, explicit scaleMax headroom) | — |
 | M.HELP-T20 | 2026-10-31 | feature | closed | Extract a shared BrailleCanvas primitive from AsciiCandleChart; add a general-purpose AsciiMockup wireframe renderer on top of it | c87e901 |
-| M.HELP-T21 | 2026-11-02 | docs | open | Adopt MindAttic.Agency docs-site pipeline, publish README to GitHub Pages (HOUSE-LAW-14) | — |
+| M.HELP-T21 | 2026-11-02 | docs | closed | Adopt MindAttic.Agency docs-site pipeline, publish README to GitHub Pages (HOUSE-LAW-14) | — |
 | M.HELP-T22 | 2026-11-02 | fix | closed | Bughunt sweep, two passes: find and fix real bugs across tracked source (user request 2026-11-02) | — |
 | M.HELP-T23 | 2026-11-02 | fix | closed | Command pointer in .agent/commands said a literal $source instead of its legacy path (install.ps1 escaping bug fixed in MAT-T84); point it at the real source, or the global command when the project copy is gone | — |
 | M.HELP-T24 | 2026-11-02 | fix | closed | Fix the open items the 2026-11-02 bughunt left for decision (AsciiChart invariant culture, AbstractArtGenerator vs mindattic.com JS) | — |
 | M.HELP-T25 | 2026-11-10 | chore | closed | Crash recovery: commit the command-catalog sync (.agent/commands/*.md) and regenerated docs/USER_STORIES.md left uncommitted by the session crash | — |
+| M.HELP-T26 | 2026-11-10 | chore | closed | Adopt the shared docs-site pipeline: turn on GitHub Pages | — |
+| M.HELP-T27 | 2026-11-17 | docs | closed | Update USER_STORIES.md | — |
