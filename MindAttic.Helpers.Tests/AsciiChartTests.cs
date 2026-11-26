@@ -36,7 +36,7 @@ public class AsciiChartTests
         string[] lines = AsciiChart.BarChart(points).Split('\n');
         int barColumn = lines[0].IndexOf('|');
         Assert.That(lines.Select(l => l.IndexOf('|')).Distinct().Count(), Is.EqualTo(1));
-        Assert.That(lines[0][..barColumn].TrimStart(), Is.EqualTo("a".PadLeft(barColumn)));
+        Assert.That(lines[0][..barColumn].TrimEnd(), Is.EqualTo("a".PadLeft("longer label".Length)));
     }
 
     [Test]
