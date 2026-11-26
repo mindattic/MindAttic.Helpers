@@ -68,9 +68,11 @@ public class AsciiChartTests
         var points = new[] { new ChartPoint("one", 100) };
 
         string chart = AsciiChart.BarChart(points, maxBarWidth: 10, markerValue: 50);
-        string bar = chart.Split('|')[1].TrimEnd();
+        // Line shape is "label | <bar> value"; the bar is exactly maxBarWidth wide after the separator.
+        string bar = chart[(chart.IndexOf('|') + 2)..][..10];
 
-        Assert.That(bar[4], Is.EqualTo('|'), bar);
+        // 50 of 100 on a 10-wide bar rounds to column 5, overlaying the fill there.
+        Assert.That(bar[5], Is.EqualTo('|'), bar);
     }
 
     [Test]
